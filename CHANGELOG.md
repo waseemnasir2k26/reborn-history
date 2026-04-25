@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.3.0] — 2026-04-25
+
+Two-mode release. Master prompts now branch on whether the niche needs a written script (history, lore, mystery) or is purely visual (restoration, craft, ASMR). When a script is needed, an automatic math pipeline computes scene and image counts from voiceover length.
+
+### Added
+- **`INCLUDE_SCRIPT` field** in INPUT block — required, yes/no. Generator asks if missing; never silently defaults.
+- **`SCRIPT-TO-SCENES PIPELINE` section** in canonical structure — emitted only when INCLUDE_SCRIPT=yes. 7 steps: emit script → ask user for VO length in minutes → compute TOTAL_SECONDS = MIN × 60 → SCENE_COUNT = floor(SECONDS / 8) → IMAGE_COUNT = SCENE_COUNT + 1 → pair scenes (Scene N = Image N + Image N+1) → distribute scenes across script sections proportionally → emit in 2-section batches.
+- **Worked pipeline example** (8-min video → 480 sec → 60 scenes → 61 images) with full per-section distribution table.
+- **`SCENE_DURATION_SECONDS` override** in INPUT block (default 8s; can be 5s / 6s / 8s / 10s).
+- **Sora 2 special case**: IMAGE_COUNT = SCENE_COUNT (no end-frame needed; Sora generates from a single image).
+- **DECISION 12** (INCLUDE_SCRIPT validation) and **DECISION 13** (Pipeline Math) added to Agent 04 prompt architect.
+- **OUTPUT CONTROL section** now branches: script-first execution if INCLUDE_SCRIPT=yes; direct image+JSON emission if no.
+- **New post-generation commands**: `flip include_script` (toggles mode and regenerates SCRIPT WRITING + PIPELINE).
+- **Pipeline anti-fails** (5 new) added to FAILSAFE: emit prompts before VO length asked, forget +1 for image count, break chain rule, non-integer scene count, distribution mismatch.
+
+### Changed
+- Canonical structure now flexible: **35 sections** if INCLUDE_SCRIPT=no, **36 sections** if yes (PIPELINE inserted between CHARACTER CONTINUITY and SCENE JSON).
+- `META-PROMPT.md` — INPUT block now requires INCLUDE_SCRIPT; PHASE 4 has 13 decisions (was 11); OUTPUT INSTRUCTION asks for missing INCLUDE_SCRIPT before generating.
+- `templates/MASTER-PROMPT-TEMPLATE.md` — added SCRIPT-TO-SCENES PIPELINE skeleton and conditional OUTPUT CONTROL section.
+- `agents/04-prompt-architect.md` — added DECISION 12 (validation) and DECISION 13 (math, 6 subsections covering steps, worked example, scene-duration override, Sora override, distribution rule, anti-fails).
+- `agents/05-output-compiler.md` — assembly order now conditional (35 vs 36); 8 new quality gates for INCLUDE_SCRIPT logic and pipeline correctness.
+- `SKILL.md` — version 2.2.0 → 2.3.0; description updated with pipeline math; new commands documented.
+
+### Why this matters
+
+Two real-world workflows were colliding inside one master prompt:
+
+1. **Script-driven niches** (history, lore, mystery, "what happened to") — user writes the script first, times it, then needs to know exactly how many image generations and motion clips to budget. Without the math, users were over-generating images, under-generating clips, or hitting non-continuous scene cuts.
+
+2. **Pure-visual niches** (mansion / hotel / castle restoration, watch / car detailing, ASMR-craft, aesthetic loops) — no script ever, scene count comes from stage progression × pacing. Asking these users to choose a narration mode wastes their time.
+
+v2.3.0 splits cleanly: the master prompt itself adapts to which kind of channel the user is running, and when math is needed, it's exact (floor for scene count, +1 for chained-frame images, Sora override for single-image scenes).
+
+### Backward compatibility
+v2.2.0 master prompts continue to work — they implicitly assumed INCLUDE_SCRIPT=yes for narration niches and silent for visual niches. New users get the explicit toggle; existing users can re-generate with the toggle when they want the SCRIPT-TO-SCENES PIPELINE math.
+
+---
+
 ## [2.2.0] — 2026-04-25
 
 Production-readiness release. Three critical fixes from real-world testing of v2.1.0 (the historical-reconstructions test output revealed gaps that this release closes).

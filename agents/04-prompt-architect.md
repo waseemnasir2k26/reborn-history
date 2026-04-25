@@ -335,6 +335,62 @@ Scheme B — Process-aligned (0-indexed):
 
 ENFORCE: Every section of the master prompt that references stages or sections must use the same scheme. Audit the emitted master prompt for mixed numbering before passing to OUTPUT COMPILER (Agent 05).
 
+DECISION 12 — INCLUDE_SCRIPT VALIDATION
+
+If the user did not provide INCLUDE_SCRIPT in the input, ASK before generating anything else. Do not infer from the niche.
+
+After receiving the answer:
+
+IF INCLUDE_SCRIPT = yes:
+- SCRIPT WRITING SYSTEM section MUST set MODE to `full-narration` or `minimal-narration`
+- SCRIPT-TO-SCENES PIPELINE section MUST be emitted in full (Decision 13 below)
+- OUTPUT CONTROL section MUST instruct: write script first → ask for VO length → compute → emit batches
+- FAILSAFE MUST include pipeline-related anti-fails
+
+IF INCLUDE_SCRIPT = no:
+- SCRIPT WRITING SYSTEM section MUST set MODE to `text-only` or `silent`
+- SCRIPT-TO-SCENES PIPELINE section is NOT emitted (skip cleanly — no stub section)
+- OUTPUT CONTROL section instructs: skip script, emit Transition + Image Prompts + Scene JSON directly per stage
+- Scene count derives from PACING section's images-per-stage map
+
+The INCLUDE_SCRIPT decision affects 4 sections: SCRIPT WRITING SYSTEM, SCRIPT-TO-SCENES PIPELINE (present/absent), OUTPUT CONTROL, FAILSAFE. All four must reflect the chosen mode consistently.
+
+DECISION 13 — PIPELINE MATH (only emitted if INCLUDE_SCRIPT = yes)
+
+The 7-step pipeline is canonical and hardcoded — not niche-specific. Only the worked example varies. Emit:
+
+13a. EXECUTION STEPS (verbatim, all 7)
+1. Emit script in text (no images, no JSON yet)
+2. Ask: "What is your target voiceover length in MINUTES?"
+3. TOTAL_SECONDS = VO_MINUTES × 60
+4. SCENE_COUNT = floor(TOTAL_SECONDS / SCENE_DURATION)  (default SCENE_DURATION = 8s)
+5. IMAGE_COUNT = SCENE_COUNT + 1
+6. Pair: Scene N = Image N + Image N+1
+7. Distribute scenes across sections proportionally; emit batches of 2 sections
+
+13b. WORKED EXAMPLE
+Use the niche's typical VO length to produce a worked example. Example for an 8-min history video:
+- 8 min × 60 = 480 seconds
+- floor(480 / 8) = 60 scenes
+- 60 + 1 = 61 images
+- Distribution table mapping each section to its scene range and image range
+
+13c. SCENE_DURATION OVERRIDE
+Note that SCENE_DURATION defaults to 8s but user can override with `SCENE_DURATION_SECONDS` in the INPUT block. Common values: 5s, 6s, 8s, 10s.
+
+13d. IMAGE-COUNT FORMULA OVERRIDE
+For TARGET_TOOL = Sora 2, IMAGE_COUNT = SCENE_COUNT (Sora generates the full scene from a single image, no end-frame needed). For all other tools (VEO 3.1, Kling 2.5, Runway Gen-4), IMAGE_COUNT = SCENE_COUNT + 1.
+
+13e. SECTION-DURATION DISTRIBUTION
+Read the per-section duration map from the SCRIPT WRITING SYSTEM, divide each section's duration by SCENE_DURATION, round, and verify the sum equals SCENE_COUNT (re-balance if off-by-one).
+
+13f. PIPELINE ANTI-FAILS
+- Emitting prompts before asking for VO length
+- Forgetting +1 for image count (or forgetting -1 in Sora override)
+- Breaking the chain rule (image N must serve as both end-of-scene-N-1 and start-of-scene-N)
+- Non-integer scene counts
+- Total scenes ≠ SCENE_COUNT after distribution
+
 ---
 
 ## RULES
@@ -346,3 +402,5 @@ ENFORCE: Every section of the master prompt that references stages or sections m
 - **Escalation must be encoded in stages.** If stage 7 isn't visibly more premium / intense / large-scale than stage 5, the progression is broken.
 - **Numbering must be consistent.** If you pick Scheme A, never reference "Stage 0" anywhere in the prompt. If you pick Scheme B, never reference "Section 1" as a separate concept from "Stage 1".
 - **Character lock is mandatory if named subjects exist.** Generic "consistency" rules are not enough — emit the actual tool-specific syntax.
+- **INCLUDE_SCRIPT is mandatory.** Never silently default. Always confirm with the user if missing.
+- **Pipeline math is exact.** Always floor for scene count. Always +1 for image count (except Sora). Always re-balance distribution.

@@ -189,10 +189,10 @@ NO REGRESSION RULE
 OBJECT / ELEMENT PERSISTENCE
 --------------------------------------------------
 
-Only {category — e.g., "structural elements", "established devastation state", "the focal object"} elements persist across all sections:
-- {persistent_1 — e.g., "load-bearing walls"}
-- {persistent_2 — e.g., "established skyline silhouette"}
-- {persistent_3 — e.g., "the named character's posture"}
+Only {category} elements persist:
+- {persistent_1}
+- {persistent_2}
+- {persistent_3}
 
 --------------------------------------------------
 {NICHE_PROCESS_NAME} STAGES
@@ -473,11 +473,17 @@ full frame
 {People/Workers/Subjects}:
 {consistency rule}
 
+Character Lock:
+{tool-specific syntax — see CHARACTER CONTINUITY section}
+
 Lighting:
 {stage-appropriate}
 
 Audio:
 {matching action}
+
+Color:
+{graded per Color Lock}
 
 Quality:
 8K ultra detailed, sharp, cinematic
@@ -486,39 +492,116 @@ Forbidden:
 - partial areas
 - rework
 - mixed states
+- {niche-specific anti-patterns}
 
 Result:
 stage complete
 
 --------------------------------------------------
+CHARACTER / SUBJECT CONTINUITY
+--------------------------------------------------
+
+LOCK METHOD: {midjourney_cref / flux_lora / kling_first_last_frame / runway_references / sora_storyboard / veo_image_condition / none}
+
+FIRST APPEARANCE:
+- Full descriptor in prompt (age, build, dress, distinguishing marks)
+- Save resulting image URL or asset ID
+- Record in scene JSON: "character_lock.reference_url_or_id"
+
+SUBSEQUENT APPEARANCES:
+- Append lock syntax to every prompt featuring this subject
+- Visually verify face shape, build, dress, marks match
+- Mismatch = FAILSAFE regenerate
+
+TOOL SYNTAX REFERENCE:
+- Midjourney v7: `--cref <URL> --cw 100` (full lock) or `--cw 50` (face only)
+- Flux 1.1 Pro: train LoRA, load `<lora:name_v1:0.85>`
+- Kling 2.5: first-frame pinning + still-image lock chain
+- Runway Gen-4: `@<reference_name>` tags, max 3 per scene
+- Sora 2: storyboard character cards
+- VEO 3.1: image_condition parameter on every clip
+
+--------------------------------------------------
 SCENE SYSTEM
 --------------------------------------------------
 
+EMIT RULES:
+- All values MUST be filled — never leave a field blank
+- Use double quotes; no trailing commas; no comments inside JSON
+- Numbers unquoted; strings quoted; booleans unquoted
+
+SCHEMA:
+
 {
-  "scene": number,
-  "duration": {default_seconds — emit a concrete integer like 8 (VEO3) / 5 (Kling 2.5) / 10 (Sora 2). Never leave as `{default_seconds}` literal.},
-  "start_state": "Image N",
-  "end_state": "Image N+1",
+  "scene": <int>,
+  "section": <int>,
+  "stage": <int>,
+  "duration_seconds": <int 5..10>,
+  "start_state": "<one-sentence description>",
+  "end_state": "<one-sentence description>",
+  "camera": {
+    "framing_class": "<niche-specific framing label>",
+    "focal_length_mm": <int>,
+    "movement": "<locked | slow_dolly_in | slow_dolly_out | parallax_2_5d | ken_burns>",
+    "movement_seconds": <int>
+  },
+  "lighting": {
+    "key_temp_K": <int>,
+    "shadow_density_pct": <int 0..100>,
+    "source_count": <int>
+  },
+  "audio": {
+    "music_cue": "<MUSIC IN | MUSIC OUT | MUSIC SWELL | MUSIC DUCK | continue | silent>",
+    "sfx": ["<sfx_1>", "<sfx_2>"],
+    "vo_present": <true|false>,
+    "silence_seconds": <int>
+  },
+  "character_lock": {
+    "method": "<midjourney_cref | flux_lora | kling_first_last_frame | runway_references | sora_storyboard | veo_image_condition | none>",
+    "reference_url_or_id": "<URL or LoRA name or 'none'>"
+  },
+  "{niche_lock_check}": "<passed | failed>",
   "rules": [
     "continuity",
     "single action",
     "real process",
-    "no instant change"
+    "no instant change",
+    "{niche-specific rule}"
   ]
 }
+
+--------------------------------------------------
+SCRIPT-TO-SCENES PIPELINE (only emitted if INCLUDE_SCRIPT = yes)
+--------------------------------------------------
+
+ORDER:
+1. Write the full script in text (per SCRIPT WRITING SYSTEM)
+2. Ask user: "What is your target voiceover length in MINUTES?"
+3. Compute: TOTAL_SECONDS = VO_MINUTES × 60
+4. Compute: SCENE_COUNT = floor(TOTAL_SECONDS / 8)
+5. Compute: IMAGE_COUNT = SCENE_COUNT + 1
+6. Pair: Scene N = Image N + Image N+1 (chained-frame motion)
+7. Distribute scenes across script sections proportional to section duration
+8. Emit image prompts and scene JSON in 2-section batches
+
+ANTI-FAIL:
+- emitting prompts before VO length is asked
+- forgetting +1 for image count
+- breaking the chain (image N must be both end-of-scene-N-1 and start-of-scene-N)
+- non-integer scene counts (always floor)
+- total scenes ≠ SCENE_COUNT after distribution
 
 --------------------------------------------------
 OUTPUT CONTROL
 --------------------------------------------------
 
-Generate ONLY {N} sections per response.
+IF INCLUDE_SCRIPT = yes:
+  ORDER per response: 1) script block (for the 2 sections being emitted); 2) image prompts for those sections' image range; 3) scene JSON for those sections' scene range. Then STOP.
 
-Each section:
-1. Transition
-2. Image Prompts
-3. Scene JSON
+IF INCLUDE_SCRIPT = no:
+  ORDER per response: 1) Transition image + JSON; 2) Image prompts for those 2 sections' stages; 3) Scene JSON per stage. Then STOP.
 
-Then STOP.
+Generate ONLY 2 sections per response in either mode.
 
 --------------------------------------------------
 FAILSAFE

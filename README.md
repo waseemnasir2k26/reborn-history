@@ -40,8 +40,11 @@ YOUTUBE_URL: https://youtube.com/watch?v=xxxxx
 TARGET_TOOL: VEO3
 DURATION: longform
 LANGUAGE: English
+INCLUDE_SCRIPT: no
 EXTRA_NOTES: ASMR-tier, no narration first 8s
 ```
+
+**`INCLUDE_SCRIPT` is required** — `yes` if your niche needs voiceover narration (history, lore, mystery, educational), `no` if it's purely visual (restoration, craft, ASMR, aesthetic loops). If you skip it, the generator will ask before producing anything.
 
 ### 4. Send. Receive your master prompt.
 
@@ -94,8 +97,39 @@ Every generated master prompt conforms to the structure in [`templates/MASTER-PR
 - **IMAGE QUALITY SYSTEM**
 - **MASTER IMAGE TEMPLATE** — includes `Character Lock:` field
 - **CHARACTER / SUBJECT CONTINUITY** — tool-specific lock method (Midjourney `--cref`, Flux LoRA, Kling first-frame, Runway `@ref`, Sora storyboard cards, VEO `image_condition`)
+- **SCRIPT-TO-SCENES PIPELINE** *(only if INCLUDE_SCRIPT=yes)* — 7-step math: emit script → ask for VO length → seconds = min × 60 → scenes = floor(seconds/8) → images = scenes+1 → chain pairing → distribute proportionally
 - **SCENE JSON SYSTEM** — valid placeholder schema + worked example
 - **OUTPUT CONTROL / FAILSAFE / STYLE LOCK**
+
+### About INCLUDE_SCRIPT
+
+This required field tells the generator which workflow your niche needs:
+
+| INCLUDE_SCRIPT | Master prompt behavior | Best for |
+| --- | --- | --- |
+| `yes` | Writes script first → asks user for VO length in minutes → computes scene/image counts via floor(seconds/8) and scenes+1 → emits batches of 2 sections | History, lore, mystery, educational, "what happened to", documentaries |
+| `no` | Skips script entirely → emits image prompts + scene JSON directly per stage based on PACING section | Mansion / hotel / castle restoration, watch / car detailing, ASMR-craft, aesthetic loops |
+
+If unsure, the generator will ask. Niche-family default suggestions are documented in the META-PROMPT.
+
+### About the Script-to-Scenes math
+
+When `INCLUDE_SCRIPT=yes`, the generated master prompt enforces this exact flow at runtime:
+
+```
+1. Write script (text only)
+2. Ask user: "VO length in minutes?"
+3. TOTAL_SECONDS = MINUTES × 60        # e.g., 8 × 60 = 480
+4. SCENE_COUNT = floor(SECONDS / 8)    # e.g., floor(480/8) = 60
+5. IMAGE_COUNT = SCENE_COUNT + 1       # e.g., 60+1 = 61
+
+Scene 1 = Image 1 + Image 2
+Scene 2 = Image 2 + Image 3
+...
+Scene 60 = Image 60 + Image 61
+```
+
+The same image acts as both the END of one scene and the START of the next — no jump cuts. (Sora 2 special case: IMAGE_COUNT = SCENE_COUNT, no end-frame.)
 
 ### About the Script Writing System
 

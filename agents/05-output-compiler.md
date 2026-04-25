@@ -55,23 +55,26 @@ Render the architecture into the canonical structure defined in `templates/MASTE
 28. **IMAGE QUALITY SYSTEM** — 8K, sharp, no blur.
 29. **MASTER IMAGE TEMPLATE** — from Agent 04 Decision 8 (now includes `Character Lock:` field).
 30. **CHARACTER / SUBJECT CONTINUITY** — from Agent 04 Decision 10. Always present (even when method is `none`, the section appears stating that no named subjects exist in this niche).
-31. **SCENE SYSTEM** — JSON schema from Agent 04 Decision 7 (now with valid placeholder syntax).
-32. **OUTPUT CONTROL** — sections per response, then STOP.
-33. **FAILSAFE** — from Agent 04 Decision 6 + Decision 10d (character lock failures).
-34. **STYLE LOCK** — lens, grade, tones.
-35. **END OF PROMPT** marker.
+31. **SCRIPT-TO-SCENES PIPELINE** — from Agent 04 Decision 13. **Emitted ONLY if INCLUDE_SCRIPT = yes**. If no, skip cleanly (do not emit a stub).
+32. **SCENE SYSTEM** — JSON schema from Agent 04 Decision 7 (now with valid placeholder syntax).
+33. **OUTPUT CONTROL** — sections per response, then STOP. Wording differs based on INCLUDE_SCRIPT (script-first vs direct-emission).
+34. **FAILSAFE** — from Agent 04 Decision 6 + Decision 10d (character lock failures) + Decision 13f (pipeline anti-fails, only if INCLUDE_SCRIPT = yes).
+35. **STYLE LOCK** — lens, grade, tones.
+36. **END OF PROMPT** marker.
 
 ---
 
 ## QUALITY GATES — apply before emitting
 
-- [ ] All 35 sections present, in order
+- [ ] All sections present, in order (35 if INCLUDE_SCRIPT=no, 36 if INCLUDE_SCRIPT=yes)
 - [ ] No `{placeholders}` remaining (every brace filled)
-- [ ] **Numbering scheme consistent across HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO, LIGHTING, SCRIPT — no mixed Section/Stage indexing**
+- [ ] **INCLUDE_SCRIPT was confirmed by the user** (not silently defaulted)
+- [ ] **Numbering scheme consistent across HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO, LIGHTING, SCRIPT, PIPELINE — no mixed Section/Stage indexing**
 - [ ] Variation engine: 4+ axes × 5+ variants
 - [ ] Stage progression: 6+ stages, each visually distinct
 - [ ] Audio system maps SFX/music/VO to every stage
 - [ ] **Script Writing System present with explicit MODE** (full / minimal / text-only / silent)
+- [ ] **MODE matches INCLUDE_SCRIPT:** yes → full or minimal narration; no → text-only or silent
 - [ ] **Register lock specifies tone, wpm range, sentence length, vocabulary, direct-address rule, person**
 - [ ] **Hook formula breaks down 0:00–0:08 second-by-second with open loop named**
 - [ ] **Retention mechanics list 4+ enforceable mechanisms**
@@ -79,14 +82,17 @@ Render the architecture into the canonical structure defined in `templates/MASTE
 - [ ] **Closing-line formula specified** with forbidden CTAs listed
 - [ ] **Script anti-fail list has 6+ niche-specific failures**
 - [ ] **Script output format example given** (2-section worked example)
+- [ ] **SCRIPT-TO-SCENES PIPELINE emitted IFF INCLUDE_SCRIPT = yes** (not present otherwise — no stub)
+- [ ] **If pipeline emitted:** all 7 steps present + worked example + SCENE_DURATION override note + Sora override note + 5+ pipeline anti-fails
+- [ ] **OUTPUT CONTROL reflects the chosen mode:** script-first if yes, direct-emission if no
 - [ ] Lighting system progresses (not static)
-- [ ] FAILSAFE: 8+ niche-specific rules including character lock failures (if applicable)
+- [ ] FAILSAFE: 8+ niche-specific rules + character lock failures (if applicable) + pipeline anti-fails (if INCLUDE_SCRIPT=yes)
 - [ ] STYLE LOCK: focal length + grade + tones specified
 - [ ] Master image template: zero placeholders, **includes `Character Lock:` field**
 - [ ] **CHARACTER / SUBJECT CONTINUITY section present with explicit method** (or `none` declared)
 - [ ] **SCENE JSON schema parses as valid JSON** when placeholders are replaced — no empty fields, no trailing commas, no comments
 - [ ] **SCENE JSON schema includes a fully-emitted example** (real values, not placeholders) so downstream model knows what to produce
-- [ ] Length ≥ 1,800 words (script + character + JSON sections add ~400 words to baseline)
+- [ ] Length ≥ 1,800 words (script + character + JSON sections add ~400 words to baseline; pipeline adds ~300 more if INCLUDE_SCRIPT=yes)
 - [ ] Reads as a self-contained artifact (no "see Agent 04", no internal references)
 - [ ] Niche identity locked tightly enough that two users producing videos for the same topic would converge visually AND in script register
 - [ ] Topic-agnostic within niche (works for any topic in the niche, not baked to one example)
