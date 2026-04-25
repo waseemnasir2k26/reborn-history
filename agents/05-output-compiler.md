@@ -64,29 +64,46 @@ Render the architecture into the canonical structure defined in `templates/MASTE
 
 ## QUALITY GATES — apply before emitting
 
+**Structure:**
 - [ ] All 34 sections present, in order
-- [ ] No `{placeholders}` remaining (every brace filled)
-- [ ] Variation engine: 4+ axes × 5+ variants
-- [ ] Stage progression: 6+ stages, each visually distinct
+- [ ] No `{placeholders}` remaining (every brace filled — no `{N}`, `{seconds}`, `{category}` left over)
+- [ ] No `[A-Z_]+` ALL-CAPS-with-underscores tokens remain (`{NICHE_PROCESS}` → actual niche name)
+- [ ] Stage progression: 6+ stages, each visually distinct (or 6 narrative beats for retention-driver-based)
 - [ ] Audio system maps SFX/music/VO to every stage
-- [ ] **Script Writing System present with explicit MODE** (full / minimal / text-only / silent)
-- [ ] **Register lock specifies tone, wpm range, sentence length, vocabulary, direct-address rule, person**
-- [ ] **Hook formula breaks down 0:00–0:08 second-by-second with open loop named**
-- [ ] **Retention mechanics list 4+ enforceable mechanisms**
-- [ ] **Cue notation reference present** (SFX, MUSIC, PAUSE, BEAT, ON-SCREEN, SOURCE if applicable)
-- [ ] **Closing-line formula specified** with forbidden CTAs listed
-- [ ] **Script anti-fail list has 6+ niche-specific failures**
-- [ ] **Script output format example given** (2-section worked example)
 - [ ] Lighting system progresses (not static)
 - [ ] FAILSAFE: 8+ niche-specific rules
 - [ ] STYLE LOCK: focal length + grade + tones specified
 - [ ] Master image template: zero placeholders
-- [ ] Length ≥ 1,800 words (script section adds ~300 words to baseline)
+- [ ] Length ≥ 1,800 words
+
+**Variant safety (NEW v2.2):**
+- [ ] Variation engine: 4+ axes × 5+ variants
+- [ ] **Combinatorial variant budget ≥ 300** (multiply axis variant counts; for 50-video sprints aim for ≥ 600)
+- [ ] **Axes are independent** — POV does not imply CAMERA, ERA does not imply COLOR_GRADE, etc. Test each pair.
+
+**Script:**
+- [ ] **Script Writing System present with explicit MODE** (full / minimal / text-only / silent)
+- [ ] **Register lock specifies tone, wpm range, sentence length, vocabulary, direct-address rule, person**
+- [ ] **Hook formula breaks down 0:00–0:08 second-by-second with open loop named**
+- [ ] **Retention mechanics list 4+ enforceable mechanisms**
+- [ ] **Hook-to-open-loop resolution traceable (NEW v2.2)** — the open loop planted in 0:00–0:08 must name a section number where it resolves AND that section must contain a VO line that closes it (visual-only resolution does not count for full-narration mode)
+- [ ] **Cue notation reference present** (SFX, MUSIC, PAUSE, BEAT, ON-SCREEN, SOURCE if applicable)
+- [ ] **Closing-line formula specified** with forbidden CTAs listed
+- [ ] **Script anti-fail list has 6+ niche-specific failures**
+- [ ] **Forbidden-word list is language-native (NEW v2.2)** — for non-English LANGUAGE values, list locale-specific direct-address words. Examples: Hindi → "doston", "dosto", "saathiyon"; Spanish → "amigos", "chicos", "muchachos"; Arabic → "ya jama'a", "ya shabab". A forbidden list with only English-translated equivalents fails this gate.
+- [ ] **Script output format example given** (2-section worked example)
+
+**Audio-visual coherence (NEW v2.2):**
+- [ ] **Hook SFX is permitted in Stage 0/1 of audio system** — if HOOK FORMULA names `[SFX: bell tolls 0:06]` but AUDIO SYSTEM Stage 0 says "no bells", that is a self-contradiction. Audit cue-by-cue.
+- [ ] **Music in/out cues align with section boundaries** — `[MUSIC IN]` mid-section requires explicit beat alignment.
+- [ ] **No audio cue references a stage that does not exist** (e.g., "Stage 7 SFX" when stages are 0–5).
+
+**Identity:**
 - [ ] Reads as a self-contained artifact (no "see Agent 04", no internal references)
 - [ ] Niche identity locked tightly enough that two users producing videos for the same topic would converge visually AND in script register
 - [ ] Topic-agnostic within niche (works for any topic in the niche, not baked to one example)
 
-If any gate fails, regenerate the failing section before emitting.
+If any gate fails, regenerate the failing section before emitting. Do not silently downgrade.
 
 ---
 

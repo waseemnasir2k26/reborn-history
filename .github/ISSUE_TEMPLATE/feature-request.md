@@ -16,7 +16,7 @@ Why is this load-bearing for the genre? What does it unlock?
 
 ## How
 
-Sketch the change to `META-PROMPT.md`, `agents/04-prompt-architect.md`, `templates/MASTER-PROMPT-TEMPLATE.md`, or `prompts/legacy/MASTER-PROMPT-REBORN-ENGLISH.md` (v1 worked example):
+Sketch the change to `META-PROMPT.md`, `agents/04-prompt-architect.md`, or `templates/MASTER-PROMPT-TEMPLATE.md`:
 
 ```diff
 + <added section>

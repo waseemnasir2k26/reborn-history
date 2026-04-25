@@ -29,7 +29,16 @@ LANGUAGE: <optional — English / Hindi / Spanish / Arabic / etc. Default: Engli
 EXTRA_NOTES: <optional — anything the user wants honored>
 ```
 
-If a YouTube URL was provided but you cannot fetch it, **ask the user to paste**: title, channel, duration, the first 30 seconds described frame-by-frame, transcript snippet, and 3–5 visual stills. Do not fabricate.
+### Input validation — run before Phase 0
+
+Before classifying the niche, validate the inputs:
+
+1. **YOUTUBE_URL reachable?** If you cannot fetch the URL, **ask the user to paste**: title, channel, duration, the first 30 seconds described frame-by-frame, transcript snippet, and 3–5 visual stills. Do not fabricate.
+2. **Duration ≥ 5 minutes?** If the reference is a Short (< 60s) or sub-5-minute clip, the niche architecture for `longform` will not transfer cleanly. Warn the user and ask: *"Reference video is {N}s. Generate a Shorts-format master prompt instead, or do you have a longer reference video?"*
+3. **Audio-visual mix detected?** If the reference is voice-only (podcast clip), music-only (DJ mix), or muted (silent ASMR), confirm the niche-type before continuing — defaulting to `transformation-visible` will produce hollow output.
+4. **Niche string non-empty + concrete?** Reject vague NICHE values like "motivation", "general AI content", "viral videos". Ask user to specify a concrete sub-niche.
+
+Do not silently proceed with bad inputs. A 30-second clarification saves a wasted master prompt generation.
 
 ---
 
@@ -44,9 +53,26 @@ The output **MUST follow the canonical master-prompt structure** (see "OUTPUT FO
 
 ---
 
-## INTERNAL PIPELINE — 5 PHASES (run silently, in order)
+## INTERNAL PIPELINE — 6 PHASES (run silently, in order)
 
 Run these phases as internal reasoning. Do **NOT** emit phase outputs to the user unless they explicitly ask `show phase {N}`. The default visible output is the final master prompt only.
+
+### PHASE 0 — NICHE TYPE CLASSIFIER
+
+Before any other phase, classify the NICHE into exactly one of these 4 types. The chosen type determines which template skeleton + rule-set to apply downstream.
+
+| Type | Engagement driver | Examples | Required template adaptations |
+|------|-------------------|----------|-------------------------------|
+| **transformation-visible** | Visible state change end-to-end | mansion restoration, watch restoration, abandoned-place reclamation, before/after transformation, satisfying-craft | Stage progression mandatory (6+ stages), per-stage continuity rule, no-regression rule strict, payoff = visible final state |
+| **retention-driver-based** | Information escalation, narrative hooks, no visible transformation | grimdark history, true-crime, science explainer, mystery breakdown, lore deep-dive | Stage progression replaced by **narrative-arc progression** (cold-open → context → escalation → climax → coda); continuity rules apply to **established devastation/atmosphere state**, not visible change |
+| **dialogue-ensemble** | Multi-character interaction, performance | period drama, sketch comedy, podcast-on-camera, narrative skit | "ONE action per stage" rule replaced by **"ONE narrative beat per stage"**; named-subject rule extended to track 2-5 characters; staggered-entrance rules added |
+| **audio-primary** | Audio is the content, visual supports | DJ mix, music production breakdown, ASMR-recording, podcast-with-visualizer | SCRIPT WRITING SYSTEM becomes **AUDIO COMPOSITION SYSTEM**; stage progression replaced by **track structure**; visual sections collapsed to a single VISUAL ACCOMPANIMENT block |
+
+If you cannot classify w/ ≥80% confidence, ask the user: *"Does the engagement of this niche depend more on (a) visible transformation, (b) information / story escalation, (c) dialogue between characters, or (d) audio composition?"*
+
+If a niche is hybrid (e.g., "abandoned-mansion exploration with historical narration" = transformation-visible + retention-driver-based), pick the **dominant** axis and note the secondary. The downstream phases will inherit hybrid handling rules from Agent 04.
+
+Output (internal): `niche_type: <one of 4>` + `secondary_axis: <optional>` + `rationale: <one sentence>`.
 
 ### PHASE 1 — NICHE INTELLIGENCE
 
@@ -500,24 +526,40 @@ END OF PROMPT
 
 Before you return the final master prompt, verify:
 
+**Structure gates:**
 - [ ] Every section from the canonical structure is present (none skipped)
-- [ ] Variation engine has 4+ axes, 5+ variants each
-- [ ] Stage progression has at least 6 stages, all niche-specific
+- [ ] Stage progression has at least 6 stages, all niche-specific (or 6 narrative beats for retention-driver-based niches)
 - [ ] Audio system maps audio to every stage (no "general background music")
 - [ ] Lighting system progresses across stages (not static)
 - [ ] At least 8 anti-fail rules in FAILSAFE
 - [ ] Master image template is fully specified (no placeholders)
+- [ ] No `{[A-Z_]+}` unfilled placeholder tokens remain in the output
+- [ ] Output is 1,800+ words and reads like the reference template
+- [ ] No mention of "TBD", "varies", "user choice", or unfilled brackets
+
+**Variant safety gates:**
+- [ ] Variation engine has 4+ axes, 5+ variants each
+- [ ] **Combinatorial variant budget ≥ 300** (multiply axis variant counts; flag if < 300 because a 50-video sprint will repeat)
+- [ ] **No two axes are correlated** (e.g., POV=Aerial implies CAMERA=wide; not independent → variant collapse)
+
+**Script gates:**
 - [ ] **SCRIPT WRITING SYSTEM is present with explicit MODE** (full-narration / minimal-narration / text-only / silent)
 - [ ] **Register lock specifies tone, wpm range, sentence length, vocabulary, direct-address rule**
 - [ ] **Hook formula breaks down first 8 seconds second-by-second**
 - [ ] **Retention mechanics list at least 4 enforceable mechanisms** (open loop, mini-payoff cadence, named subject, pattern interrupt)
+- [ ] **Hook-to-open-loop resolution is traceable** — the question planted in 0:00–0:08 must be resolved at a named section number, and that section must contain a VO line that closes it (not just visual)
 - [ ] **Script anti-fail list has at least 6 niche-specific failures**
+- [ ] **Forbidden-word list is language-native** — for non-English languages, list locale-specific direct-address words (e.g., Hindi: "doston", "dosto", "saathiyon"; Spanish: "amigos", "chicos"; not just English equivalents translated)
 - [ ] **Script output format example is given so the downstream model knows the exact shape to emit**
-- [ ] Output is 1,500+ words and reads like the reference template
-- [ ] No mention of "TBD", "varies", "user choice", or unfilled brackets
+
+**Audio-visual coherence gate:**
+- [ ] **Hook-stage SFX is permitted in Stage 0/1 of the audio system** — if HOOK FORMULA says `[SFX: bell tolls at 0:06]` but AUDIO SYSTEM Stage 0 forbids bells, that's a self-contradiction. Audit cue-by-cue.
+- [ ] **Music in/out cues align with section boundaries** — no `[MUSIC IN]` mid-section without explicit beat alignment.
+
+**Identity gate:**
 - [ ] Niche identity is so locked that two different users would generate visually similar videos for the same topic
 
-If any gate fails: regenerate that section before emitting.
+If any gate fails: regenerate that section before emitting. Do not silently downgrade.
 
 If the niche is one where narration adds no value (pure visual ASMR-craft, ambient cinemagraphs, abstract aesthetic loops), the SCRIPT WRITING SYSTEM section is still present but MODE is set to `silent` or `text-only` and the section explicitly states that VO is forbidden — the section is never omitted entirely.
 
@@ -538,6 +580,10 @@ If `loosen` is requested, expand examples and edge cases by 30–40%.
 If `script only` is requested, emit only the SCRIPT WRITING SYSTEM section (useful for pasting into a separate scriptwriting workflow).
 
 If `flip mode to {full-narration|minimal-narration|text-only|silent}` is requested, regenerate the SCRIPT WRITING SYSTEM section with that mode.
+
+If `niche type` is requested, emit Phase 0 output (the classification + rationale).
+
+If `validate` is requested, run all quality gates against the existing master prompt and report pass/fail for each. Do not regenerate; only audit.
 
 ---
 

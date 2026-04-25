@@ -189,10 +189,10 @@ NO REGRESSION RULE
 OBJECT / ELEMENT PERSISTENCE
 --------------------------------------------------
 
-Only {category} elements persist:
-- {persistent_1}
-- {persistent_2}
-- {persistent_3}
+Only {category — e.g., "structural elements", "established devastation state", "the focal object"} elements persist across all sections:
+- {persistent_1 — e.g., "load-bearing walls"}
+- {persistent_2 — e.g., "established skyline silhouette"}
+- {persistent_3 — e.g., "the named character's posture"}
 
 --------------------------------------------------
 {NICHE_PROCESS_NAME} STAGES
@@ -496,7 +496,7 @@ SCENE SYSTEM
 
 {
   "scene": number,
-  "duration": {default_seconds},
+  "duration": {default_seconds — emit a concrete integer like 8 (VEO3) / 5 (Kling 2.5) / 10 (Sora 2). Never leave as `{default_seconds}` literal.},
   "start_state": "Image N",
   "end_state": "Image N+1",
   "rules": [

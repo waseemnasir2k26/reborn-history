@@ -5,7 +5,7 @@
 ## One-time setup
 
 ```bash
-cd "/c/Users/info/OneDrive/Desktop/GITHUB/AI-HISTORY-VIDEO-SYSTEM"
+cd "<repo-root>"   # the directory containing META-PROMPT.md
 
 # Init repo
 git init

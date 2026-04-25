@@ -2,16 +2,19 @@
 
 ```yaml
 name: reborn-master-prompt-generator
-version: 2.1.0
+version: 2.2.0
 description: |
   Meta-skill that generates a niche-locked master prompt for AI video creation
-  given a NICHE and a reference YOUTUBE_URL. Runs a 5-agent reverse-engineering
-  pipeline (Niche Intelligence → Video Analysis → Pattern Engine → Prompt
-  Architect → Output Compiler) and emits a single paste-and-run master prompt
-  conforming to a 34-section canonical structure including a SCRIPT WRITING
-  SYSTEM section with mode-based narration (full / minimal / text-only / silent),
-  register lock, hook formula, retention mechanics, and cue notation. The output
-  prompt is topic-agnostic within the niche and reusable across an entire channel.
+  given a NICHE and a reference YOUTUBE_URL. Runs Phase 0 (niche-type classifier)
+  + 5-agent reverse-engineering pipeline (Niche Intelligence → Video Analysis →
+  Pattern Engine → Prompt Architect → Output Compiler) and emits a single
+  paste-and-run master prompt conforming to a 34-section canonical structure
+  including a SCRIPT WRITING SYSTEM section with mode-based narration
+  (full / minimal / text-only / silent), register lock, hook formula, retention
+  mechanics, and cue notation. v2.2 adds 4 strict quality gates (variant safety,
+  hook-resolution traceability, locale-native register completeness, audio-visual
+  coherence). The output prompt is topic-agnostic within the niche and reusable
+  across an entire channel.
 inputs:
   - NICHE (required)
   - YOUTUBE_URL (required)
@@ -20,7 +23,7 @@ inputs:
   - LANGUAGE (optional, default English)
   - EXTRA_NOTES (optional)
 outputs:
-  - master_prompt (markdown, 1500+ words, 33 sections)
+  - master_prompt (markdown, 1800+ words, 34 sections)
 entrypoint: META-PROMPT.md
 license: MIT
 ```

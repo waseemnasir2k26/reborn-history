@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0] — 2026-04-25
+
+Senior-analyst hardening pass. Closes 4 quality-gate holes, adds Phase 0 niche-type classifier, expands input validation, ships repeated-reuse infrastructure.
+
+### Added
+- `META-PROMPT.md` PHASE 0 — niche-type classifier (transformation-visible / retention-driver-based / dialogue-ensemble / audio-primary). Determines template adaptation downstream.
+- `META-PROMPT.md` input validation block — checks URL reachability, duration ≥ 5min, audio-visual mix, niche-string concreteness BEFORE Phase 0.
+- 4 new quality gates in Agent 05 + META-PROMPT QUALITY GATES section:
+  - **Variant safety** — combinatorial budget ≥ 300, axis independence test
+  - **Hook-to-open-loop resolution** — every retention mechanic must trace from plant to a section number with a closing VO line
+  - **Register completeness** — locale-native forbidden-word list (Hindi `doston`, Spanish `amigos`, Arabic `ya jama'a`, etc.) for non-English LANGUAGE
+  - **Audio-visual coherence** — hook-stage SFX must be permitted in audio-system Stage 0/1; no orphan audio cues
+- New post-generation commands: `niche type`, `validate`
+- `RECIPE.md`, `BATCH-VIDEOS.md`, `TROUBLESHOOTING.md`, `NICHE-REGISTRY.md` — workflow docs for repeated reuse
+- `ARCHITECTURE.md`, `FAQ.md`, `SECURITY.md` — onboarding + governance docs
+- `outputs/generated/.gitkeep` + README — canonical storage location for generated master prompts
+- `scripts/bulk-generate.py` — `niches.json` → batch invocation blocks for parallel master-prompt generation
+- `scripts/video-analyze.py` — real Phase-2 backend (youtube-transcript-api + PySceneDetect + optional Whisper + librosa BPM) replacing LLM video-analysis hallucination
+- `niches.example.json` — bulk-generate input format reference
+- `promptfoo.yaml` — eval harness w/ 3 niches × 2 models, 5+ assertions, llm-rubric, cost cap
+- `.github/workflows/validate.yml` — markdownlint + link-check + META-PROMPT structure validation + agent header validation
+
+### Changed
+- `agents/04-prompt-architect.md` — Decision 9b (register lock) requires locale-native forbidden words; Decision 9e (retention mechanics) require traceable plant→section→VO closure
+- `agents/05-output-compiler.md` — quality gates restructured into 4 categories (Structure / Variant safety / Script / Audio-visual coherence / Identity)
+- `templates/MASTER-PROMPT-TEMPLATE.md` — placeholder ambiguity tightened; `{category}` and `{default_seconds}` now include inline examples
+- README.md — hero rework, quick CTA above fold, badges row
+- Issue templates renamed for v2 generalization: `anachronism-report` → `niche-fidelity-report`, `locale-request` → `language-locale-request`
+- `PUBLISH.md` — hardcoded Windows user path scrubbed
+
+### Rationale
+v2.1.0 generalized the kernel but assumed transformation-visible niches. Talking-head, comedy, music-only, and podcast niches passed quality gates while producing semantically hollow output. v2.2 closes that gap with explicit niche-type classification + 4 strict validation gates. The repeated-reuse layer (registry, bulk-generate, eval harness) was added because the user plans to ship 20+ master prompts and needed scaffolding to prevent chaos.
+
+---
+
 ## [2.1.0] — 2026-04-25
 
 ### Added

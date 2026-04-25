@@ -1,0 +1,54 @@
+# Reborn Master Prompt Generator — eval harness (v2.1.0)
+# pip install promptfoo
+# Run: npx promptfoo eval
+
+description: Reborn Master Prompt Generator eval
+
+prompts:
+  - file://META-PROMPT.md
+
+providers:
+  - anthropic:claude-sonnet-4-6
+  - anthropic:claude-opus-4-7
+
+defaultTest:
+  options:
+    cost: 0.50
+  assert:
+    - type: contains
+      value: "PRIMARY OBJECTIVE"
+    - type: contains
+      value: "SCRIPT WRITING SYSTEM"
+    - type: contains
+      value: "VARIATION ENGINE"
+    - type: not-regex
+      value: "\\{[A-Z_]+\\}"
+    - type: llm-rubric
+      value: |
+        Output has all 34 canonical sections, register lock present,
+        hook formula breaks down 0:00-0:08.
+
+tests:
+  - description: abandoned-mansion niche
+    vars:
+      niche: abandoned mansion restoration
+      youtube_url: https://youtu.be/example-mansion
+      target_tool: VEO3
+      duration: longform
+      language: English
+
+  - description: history-cinematic niche (reborn baseline)
+    vars:
+      niche: cinematic history (reborn-style, plague/sieges/atrocity eras)
+      youtube_url: https://youtu.be/X-UgHOce2kk
+      target_tool: Midjourney+Kling
+      duration: longform
+      language: English
+
+  - description: luxury-watch restoration niche
+    vars:
+      niche: vintage luxury watch restoration
+      youtube_url: https://youtu.be/example-watch
+      target_tool: Kling 2.5
+      duration: longform
+      language: English

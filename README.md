@@ -1,38 +1,40 @@
 # Reborn — Master Prompt Generator
 
-> **A meta-skill that turns any niche + reference YouTube video into a reusable master prompt for AI video generation.** Paste your NICHE and a YOUTUBE_URL. Get back a complete, niche-locked master prompt — ready to use for every topic in that niche, forever.
+> **Paste NICHE + YOUTUBE_URL. Get back a 34-section cinematic master prompt. Any niche, any language.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Skill format: SKILL.md](https://img.shields.io/badge/format-SKILL.md-blue)](SKILL.md)
-[![Output: Master Prompt](https://img.shields.io/badge/output-Master%20Prompt-green)](META-PROMPT.md)
+[![Version](https://img.shields.io/badge/version-v2.2.0-blue)](CHANGELOG.md)
+[![Built for](https://img.shields.io/badge/built%20for-Veo%203.1%20%2B%20Kling%202.5%20%2B%20Sora%202-purple)](RECIPE.md)
+
+**Try it now:** Copy `META-PROMPT.md` → paste into Claude → fill INPUT block → submit. You get a full, niche-locked master prompt back in one response.
 
 ---
 
-## What this is
+## What this is vs what this is NOT
 
-A **niche-agnostic prompt-generation system**. Where the original `reborn-history` repo produced one hardcoded master prompt for grimdark history videos, this repo produces a **new master prompt for any niche you point it at**.
-
-You give it:
-
-```
-NICHE: abandoned mansion restoration
-YOUTUBE_URL: https://youtube.com/watch?v=xxxxx
-```
-
-It runs a 5-agent reverse-engineering pipeline internally and returns:
-
-- A complete master prompt with 33 sections — priority order, variation engine, stage progression, audio system, lighting system, scene JSON schema, anti-fail rules, style lock — all niche-locked.
-- That single master prompt then works for **every topic within that niche**. You never need to regenerate it for a new video — just feed it new TITLEs.
+| What this **IS** | What this is **NOT** |
+| ---------------- | -------------------- |
+| A meta-prompt that generates **reusable master prompts** for AI video pipelines | A video generator |
+| A 5-agent reverse-engineering system (niche → formula → 34-section prompt) | A YouTube downloader, scraper, or fetcher |
+| Niche-agnostic — works for history, mansions, watches, ASMR-craft, mythology, true-crime, etc. | Topic-specific — you pass new TITLEs to the master prompt, not new master prompts per video |
+| Tool-aware — emits Veo 3.1 / Kling 2.5 / Sora 2 / Midjourney compatible artifacts | Locked to one tool stack |
+| MIT licensed, free for commercial use | A SaaS — runs entirely inside your LLM chat |
 
 ---
 
-## Quick start
+## Three example niches (see `examples/`)
 
-### 1. Open `META-PROMPT.md`. Copy the whole file.
+- **Grimdark cinematic history** — full-narration, British-RP somber, ASMR sleep-tier → [`examples/sample-output-grimdark-history.md`](examples/sample-output-grimdark-history.md)
+- **Abandoned mansion restoration** — silent or text-only mode, before/after reveals → [`examples/input-mansion-restoration.md`](examples/input-mansion-restoration.md)
+- **Luxury watch restoration** — minimal-narration, ASMR-craft register → [`examples/input-luxury-watch-restoration.md`](examples/input-luxury-watch-restoration.md)
 
-### 2. Paste it into Claude / GPT-5 / Gemini 2.5 Pro.
+---
 
-### 3. At the bottom of the meta-prompt, fill in your INPUT block:
+## Quick start (5 steps)
+
+1. Open `META-PROMPT.md`. Copy the whole file.
+2. Paste into Claude / GPT-5 / Gemini 2.5 Pro.
+3. At the bottom, fill the INPUT block:
 
 ```
 NICHE: luxury watch restoration
@@ -43,13 +45,10 @@ LANGUAGE: English
 EXTRA_NOTES: ASMR-tier, no narration first 8s
 ```
 
-### 4. Send. Receive your master prompt.
+4. Send. The model silently runs Niche Intelligence → Video Analysis → Pattern Engine → Prompt Architect → Output Compiler and returns one artifact: the master prompt.
+5. Save it to `outputs/generated/{niche}-v{N}.md`, register it in [`NICHE-REGISTRY.md`](NICHE-REGISTRY.md), and reuse it for every topic in that niche.
 
-The model will silently run all 5 phases (Niche Intelligence → Video Analysis → Pattern Engine → Prompt Architect → Output Compiler) and emit the final master prompt only.
-
-### 5. Save the master prompt. Use it for every topic in that niche.
-
-For each new video, just paste the master prompt + a TITLE + (optional) reference image. The master prompt does the rest.
+For tool-specific paste recipes (Veo 3.1, Kling 2.5, Sora 2, Midjourney v7) and batch-generation across 20 videos, see [`RECIPE.md`](RECIPE.md) and [`BATCH-VIDEOS.md`](BATCH-VIDEOS.md).
 
 ---
 

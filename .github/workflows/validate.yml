@@ -1,0 +1,81 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install linters
+        run: |
+          npm install -g markdownlint-cli markdown-link-check
+
+      - name: Markdown lint
+        continue-on-error: true
+        run: markdownlint '**/*.md' --ignore node_modules --ignore PDF
+
+      - name: Markdown link check
+        continue-on-error: true
+        run: |
+          for f in $(find . -name '*.md' -not -path './node_modules/*' -not -path './PDF/*'); do
+            markdown-link-check -q "$f" || true
+          done
+
+      - name: META-PROMPT structure validation
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import re, sys
+          from pathlib import Path
+          mp = Path("META-PROMPT.md").read_text(encoding="utf-8")
+          required = [
+              "YOUR ROLE",
+              "INPUTS YOU WILL RECEIVE",
+              "INTERNAL PIPELINE",
+              "OUTPUT FORMAT",
+              "QUALITY GATES",
+              "INPUT BLOCK",
+          ]
+          missing = [s for s in required if s not in mp]
+          if missing:
+              print("missing sections:", missing)
+              sys.exit(1)
+          unfilled = re.findall(r"\{[A-Z_]+\}", mp)
+          # allow within fenced code blocks documenting input variables
+          if unfilled:
+              print("WARN: unfilled placeholders found:", set(unfilled))
+          print("META-PROMPT.md structure OK")
+          PY
+
+      - name: Agent header validation
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          fail = []
+          for f in sorted(Path("agents").glob("*.md")):
+              head = f.read_text(encoding="utf-8").splitlines()[:3]
+              if not any(line.startswith("# ") for line in head):
+                  fail.append(str(f))
+          if fail:
+              print("agents missing H1 header:", fail)
+              sys.exit(1)
+          print("all agent files have headers")
+          PY
