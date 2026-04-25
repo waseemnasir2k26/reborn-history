@@ -1,6 +1,8 @@
-# Reborn — Master Prompt Generator
+# Reborn Forge — Master Prompt Generator
 
 > **Paste NICHE + YOUTUBE_URL. Get back a 34-section cinematic master prompt. Any niche, any language.**
+
+<sub>Formerly published as `reborn-history`. Renamed to `reborn-forge` at v2.2 to match the niche-agnostic scope. Old GitHub URLs continue to redirect.</sub>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v2.2.0-blue)](CHANGELOG.md)

@@ -101,7 +101,7 @@ From the YOUTUBE_URL (or user-pasted observations), extract observable structure
 8. **Transformation logic** — what changes from start to end? what is the payoff?
 9. **Loop logic** — what at the end pulls the viewer back to the next video?
 
-Output (internal): structured analysis matching reborn-history's `02-video-analysis.md` format.
+Output (internal): structured analysis matching the `agents/02-video-analyzer.md` format.
 
 ### PHASE 3 — PATTERN EXTRACTION
 
