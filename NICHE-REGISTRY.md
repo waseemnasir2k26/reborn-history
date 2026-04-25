@@ -15,11 +15,12 @@ Why this exists: master prompts drift across model versions and meta-prompt vers
 
 ## Registry
 
-| Niche | Master Prompt File | Version | Reference Video | Generated Date | Model | Status | Notes |
-| ----- | ------------------ | ------- | --------------- | -------------- | ----- | ------ | ----- |
-| Abandoned mansion restoration | `outputs/generated/mansion-v1.md` | 1.0.0 | `https://youtube.com/watch?v=XXXXXX` (Architectural Digest tour) | 2026-04-25 | Claude Opus 4.7 | deployed | Silent mode, text-only cards |
-| Grimdark cinematic AI history | `outputs/generated/history-v2.md` | 2.0.0 | `https://www.youtube.com/watch?v=X-UgHOce2kk` (Tim Reborn — Bubonic Plague) | 2026-04-25 | Claude Opus 4.7 | deployed | Full-narration mode, British-RP somber |
-| <new niche> | `outputs/generated/<niche>-v1.md` | 1.0.0 | `<url>` | YYYY-MM-DD | <model> | draft | <notes> |
+| Niche | Master Prompt File | Version | Reference Video | Generated Date | Generator | Model | INCLUDE_SCRIPT | Target Tool | Status | Notes |
+| ----- | ------------------ | ------- | --------------- | -------------- | --------- | ----- | -------------- | ----------- | ------ | ----- |
+| Historical reconstructions | `outputs/generated/historical-reconstructions-v1.md` | 1.0.0 | `https://www.youtube.com/watch?v=X-UgHOce2kk` (Tim Reborn — Bubonic Plague) | 2026-04-25 | reborn-forge v2.1.0 | Claude Opus 4.7 | yes (implicit) | Veo 3.1 | deprecated | Superseded by v2.0.0 (v2.3.0 spec). Pre-pipeline-math era. |
+| Historical reconstructions | `outputs/generated/historical-reconstructions-v2.md` | 2.0.0 | `https://www.youtube.com/watch?v=X-UgHOce2kk` (Tim Reborn — Bubonic Plague) | 2026-04-26 | reborn-forge v2.3.0 | Claude Opus 4.7 | yes | VEO 3.1 | draft | 36 sections. Pipeline math: 12-min → 90 scenes / 91 images. Variation 1,764 combos. Period-lock 10+13. Hand off Naeem test. |
+| Abandoned home restoration | `outputs/generated/abandoned-home-restoration-v1.md` | 1.0.0 | `https://www.youtube.com/watch?v=GR_jZdrZ6ZA` | 2026-04-26 | reborn-forge v2.3.0 | Claude Opus 4.7 | no | VEO 3.1 | draft | 35 sections (no PIPELINE). Pure-visual silent mode. 7 stages × 13 scenes = 91 scenes. Pairs w/ naeem-timelapse-renovation SKU. |
+| <new niche> | `outputs/generated/<niche>-v1.md` | 1.0.0 | `<url>` | YYYY-MM-DD | reborn-forge v2.3.0 | <model> | yes/no | <tool> | draft | <notes> |
 
 ---
 
