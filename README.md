@@ -1,42 +1,38 @@
-# Reborn Forge — Master Prompt Generator
+# Reborn — Master Prompt Generator
 
-> **Paste NICHE + YOUTUBE_URL. Get back a 34-section cinematic master prompt. Any niche, any language.**
-
-<sub>Formerly published as `reborn-history`. Renamed to `reborn-forge` at v2.2 to match the niche-agnostic scope. Old GitHub URLs continue to redirect.</sub>
+> **A meta-skill that turns any niche + reference YouTube video into a reusable master prompt for AI video generation.** Paste your NICHE and a YOUTUBE_URL. Get back a complete, niche-locked master prompt — ready to use for every topic in that niche, forever.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v2.2.0-blue)](CHANGELOG.md)
-[![Built for](https://img.shields.io/badge/built%20for-Veo%203.1%20%2B%20Kling%202.5%20%2B%20Sora%202-purple)](RECIPE.md)
-
-**Try it now:** Copy `META-PROMPT.md` → paste into Claude → fill INPUT block → submit. You get a full, niche-locked master prompt back in one response.
+[![Skill format: SKILL.md](https://img.shields.io/badge/format-SKILL.md-blue)](SKILL.md)
+[![Output: Master Prompt](https://img.shields.io/badge/output-Master%20Prompt-green)](META-PROMPT.md)
 
 ---
 
-## What this is vs what this is NOT
+## What this is
 
-| What this **IS** | What this is **NOT** |
-| ---------------- | -------------------- |
-| A meta-prompt that generates **reusable master prompts** for AI video pipelines | A video generator |
-| A 5-agent reverse-engineering system (niche → formula → 34-section prompt) | A YouTube downloader, scraper, or fetcher |
-| Niche-agnostic — works for history, mansions, watches, ASMR-craft, mythology, true-crime, etc. | Topic-specific — you pass new TITLEs to the master prompt, not new master prompts per video |
-| Tool-aware — emits Veo 3.1 / Kling 2.5 / Sora 2 / Midjourney compatible artifacts | Locked to one tool stack |
-| MIT licensed, free for commercial use | A SaaS — runs entirely inside your LLM chat |
+A **niche-agnostic prompt-generation system**. Where the original `reborn-history` repo produced one hardcoded master prompt for grimdark history videos, this repo produces a **new master prompt for any niche you point it at**.
 
----
+You give it:
 
-## Three example niches (see `examples/`)
+```
+NICHE: abandoned mansion restoration
+YOUTUBE_URL: https://youtube.com/watch?v=xxxxx
+```
 
-- **Grimdark cinematic history** — full-narration, British-RP somber, ASMR sleep-tier → [`examples/sample-output-grimdark-history.md`](examples/sample-output-grimdark-history.md)
-- **Abandoned mansion restoration** — silent or text-only mode, before/after reveals → [`examples/input-mansion-restoration.md`](examples/input-mansion-restoration.md)
-- **Luxury watch restoration** — minimal-narration, ASMR-craft register → [`examples/input-luxury-watch-restoration.md`](examples/input-luxury-watch-restoration.md)
+It runs a 5-agent reverse-engineering pipeline internally and returns:
+
+- A complete master prompt with 33 sections — priority order, variation engine, stage progression, audio system, lighting system, scene JSON schema, anti-fail rules, style lock — all niche-locked.
+- That single master prompt then works for **every topic within that niche**. You never need to regenerate it for a new video — just feed it new TITLEs.
 
 ---
 
-## Quick start (5 steps)
+## Quick start
 
-1. Open `META-PROMPT.md`. Copy the whole file.
-2. Paste into Claude / GPT-5 / Gemini 2.5 Pro.
-3. At the bottom, fill the INPUT block:
+### 1. Open `META-PROMPT.md`. Copy the whole file.
+
+### 2. Paste it into Claude / GPT-5 / Gemini 2.5 Pro.
+
+### 3. At the bottom of the meta-prompt, fill in your INPUT block:
 
 ```
 NICHE: luxury watch restoration
@@ -47,10 +43,13 @@ LANGUAGE: English
 EXTRA_NOTES: ASMR-tier, no narration first 8s
 ```
 
-4. Send. The model silently runs Niche Intelligence → Video Analysis → Pattern Engine → Prompt Architect → Output Compiler and returns one artifact: the master prompt.
-5. Save it to `outputs/generated/{niche}-v{N}.md`, register it in [`NICHE-REGISTRY.md`](NICHE-REGISTRY.md), and reuse it for every topic in that niche.
+### 4. Send. Receive your master prompt.
 
-For tool-specific paste recipes (Veo 3.1, Kling 2.5, Sora 2, Midjourney v7) and batch-generation across 20 videos, see [`RECIPE.md`](RECIPE.md) and [`BATCH-VIDEOS.md`](BATCH-VIDEOS.md).
+The model will silently run all 5 phases (Niche Intelligence → Video Analysis → Pattern Engine → Prompt Architect → Output Compiler) and emit the final master prompt only.
+
+### 5. Save the master prompt. Use it for every topic in that niche.
+
+For each new video, just paste the master prompt + a TITLE + (optional) reference image. The master prompt does the rest.
 
 ---
 
@@ -93,8 +92,9 @@ Every generated master prompt conforms to the structure in [`templates/MASTER-PR
 - **LIGHTING SYSTEM** — per-stage progression
 - **COLOR GRADING LOCK**
 - **IMAGE QUALITY SYSTEM**
-- **MASTER IMAGE TEMPLATE**
-- **SCENE JSON SYSTEM**
+- **MASTER IMAGE TEMPLATE** — includes `Character Lock:` field
+- **CHARACTER / SUBJECT CONTINUITY** — tool-specific lock method (Midjourney `--cref`, Flux LoRA, Kling first-frame, Runway `@ref`, Sora storyboard cards, VEO `image_condition`)
+- **SCENE JSON SYSTEM** — valid placeholder schema + worked example
 - **OUTPUT CONTROL / FAILSAFE / STYLE LOCK**
 
 ### About the Script Writing System
@@ -107,6 +107,27 @@ The Script section is **always present**, but its `MODE` adapts to the niche:
 - **`silent`** — no VO, no text — pure SFX + music. Used for loops and abstract aesthetic niches.
 
 Even in `silent` mode the section is still emitted (with VO explicitly forbidden), so the downstream model never has ambiguity about what is and isn't allowed.
+
+### About Character / Subject Continuity
+
+The Character Continuity section is **always present**, but its `method` adapts to the niche and target tool:
+
+- **History / lore / mystery** with named figures → `midjourney_cref` (default) or `flux_lora` (for high-volume channels)
+- **Restoration / craft** with anonymous hands → `none`
+- **Documentary** with reference photos available → `runway_references`
+- **Long-form storytelling** with consistent characters → `sora_storyboard`
+- **Pure motion / cinemagraph** → `none`
+
+When `method ≠ none`, every still-image prompt's `Character Lock:` field carries the actual tool syntax (e.g. `--cref https://cdn.midjourney.com/<hash>/0_0.png --cw 100`), so downstream models can paste-and-go.
+
+### About Numbering Consistency
+
+Every master prompt picks ONE numbering scheme and applies it everywhere:
+
+- **Scheme A — Section-aligned (1-indexed):** "Section 1 / Stage 1 — Cold Open" through "Section 8 / Stage 8 — Coda". Used for fixed-arc niches (history, lore).
+- **Scheme B — Process-aligned (0-indexed):** "Stage 0 — Abandoned" through "Stage 10 — Final Reveal". Used for transformation niches (restoration, craft).
+
+The HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO SYSTEM, LIGHTING SYSTEM, and SCRIPT WRITING SYSTEM all use the same numbering. No mixed indexing — this was a v2.1.0 bug, fixed in v2.2.0.
 
 See [`examples/`](examples/) for sample inputs and the master prompts they produced.
 

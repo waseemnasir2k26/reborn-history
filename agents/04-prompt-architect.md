@@ -21,17 +21,7 @@ LANGUAGE: <EN / HI / ES / etc.>
 
 ## YOUR JOB
 
-Make 9 architectural decisions. Each decision becomes a section in the final master prompt.
-
-**Phase 0 niche-type drives template adaptation:**
-
-- `transformation-visible` → use stage progression (Decision 3 = stages 0–N)
-- `retention-driver-based` → replace stages with **narrative beats** (cold-open → context → escalation → climax → coda); continuity rule covers established atmosphere not visible change
-- `dialogue-ensemble` → "ONE action per stage" becomes "ONE narrative beat per stage"; Subjects field in image template tracks 2–5 named characters w/ staggered-entrance schedule
-- `audio-primary` → Decision 4 (audio) becomes the spine; Decision 3 stages become **track segments**; visual blocks collapse to a single VISUAL ACCOMPANIMENT spec
-
-State the chosen niche_type as a header line above DECISION 1, e.g.:
-`PROMPT ARCHITECTURE — {NICHE} (niche_type: transformation-visible)`
+Make 8 architectural decisions. Each decision becomes a section in the final master prompt.
 
 ---
 
@@ -101,15 +91,39 @@ Examples:
 - For ASMR: "VO pace > 145 wpm" or "cuts faster than 4 sec in longform"
 
 DECISION 7 — SCENE JSON SCHEMA
-For TARGET_TOOL = {tool}, the schema is:
+
+Emit a valid JSON schema with angle-bracket placeholders showing the expected type for each field. Every field must be present in every per-scene JSON the downstream model emits. Numbers unquoted, strings double-quoted, booleans unquoted, no trailing commas, no inline comments.
+
+Base schema (all niches MUST include these fields):
 
 {
-  "scene": number,
-  "duration": {N seconds — 5/8/10 depending on tool},
-  "start_state": "Image N",
-  "end_state": "Image N+1",
-  "camera": {tool-specific camera fields},
-  "audio": {tool-specific audio fields},
+  "scene": <int>,
+  "section": <int>,
+  "stage": <int>,
+  "duration_seconds": <int 5..10>,
+  "start_state": "<one-sentence description of Image N>",
+  "end_state": "<one-sentence description of Image N+1>",
+  "camera": {
+    "framing_class": "<niche-specific framing label>",
+    "focal_length_mm": <int>,
+    "movement": "<locked | slow_dolly_in | slow_dolly_out | parallax_2_5d | ken_burns>",
+    "movement_seconds": <int>
+  },
+  "lighting": {
+    "key_temp_K": <int>,
+    "shadow_density_pct": <int 0..100>,
+    "source_count": <int>
+  },
+  "audio": {
+    "music_cue": "<MUSIC IN | MUSIC OUT | MUSIC SWELL | MUSIC DUCK | continue | silent>",
+    "sfx": ["<sfx_1>", "<sfx_2>"],
+    "vo_present": <true|false>,
+    "silence_seconds": <int>
+  },
+  "character_lock": {
+    "method": "<midjourney_cref | flux_lora | kling_first_last_frame | runway_references | sora_storyboard | veo_image_condition | none>",
+    "reference_url_or_id": "<URL or LoRA name or 'none'>"
+  },
   "rules": [
     "continuity",
     "single action",
@@ -118,11 +132,19 @@ For TARGET_TOOL = {tool}, the schema is:
   ]
 }
 
-Tool-specific fields:
-- VEO3: {fields}
-- Kling 2.5: {fields}
-- Runway Gen-4: {fields}
-- Sora 2: {fields}
+Tool-specific extensions (add these to the base schema based on TARGET_TOOL):
+
+- **VEO 3.1:** add `"veo_image_condition_url": "<URL>"`, `"audio_prompt_inline": "<full audio description for VEO native audio gen>"`
+- **Kling 2.5 Master:** add `"kling_start_frame_url": "<URL>"`, `"kling_end_frame_url": "<URL or null>"`, `"motion_intensity": "<low|medium|high>"`
+- **Runway Gen-4:** add `"runway_reference_ids": ["<ref_id_1>", "<ref_id_2>"]`, `"motion_brush_path": "<path_or_null>"`
+- **Sora 2:** add `"sora_storyboard_card_id": "<id>"`, `"sora_aspect": "<16:9 | 9:16 | 1:1>"`
+- **Midjourney v7 (still gen):** add `"mj_cref_url": "<URL>"`, `"mj_cw": <0..100>`, `"mj_sref_url": "<URL or null>"`, `"mj_aspect": "<16:9 | 9:16>"`
+
+Niche-specific extensions (add based on niche profile):
+
+- For history / period content: `"period_lock_check": "<passed | failed>"`, era-locked rules in `rules` array
+- For restoration: `"completion_pct": <int 0..100>`, `"regression_check": "<passed | failed>"`
+- For ASMR-craft: `"avg_shot_length_seconds": <number>`, `"audio_foreground_layer": "<sfx description>"`
 
 DECISION 8 — MASTER IMAGE TEMPLATE
 The canonical block every still-image prompt conforms to:
@@ -135,6 +157,7 @@ Global Condition: ~90–95% complete
 Action: ONE clear action
 Coverage: full frame
 Subjects: {consistency rule for this niche — e.g., "1 worker = 1 task" / "named figure persists across sections"}
+Character Lock: {tool-specific syntax from DECISION 10 — e.g. "--cref <URL_FROM_FIRST_APPEARANCE> --cw 100" for Midjourney; or "<lora:name_v1:0.85>" for Flux; or "@reference_name" for Runway}
 Lighting: {stage-derived}
 Audio: {stage-derived}
 Color: {graded per Color Lock}
@@ -156,13 +179,7 @@ Pick exactly one based on the niche profile + reference video:
 - VO pace (wpm): {range — sleep-listen 125–140 / neutral 150–165 / energetic 170–190}
 - Sentence length: {short staccato 5–9 / flowing 12–20 / mixed}
 - Vocabulary: {era-locked / technical / accessible / poetic — give 6–10 register-defining words and 6–10 forbidden words}
-- Direct address: {forbidden / minimal / encouraged} — be explicit about the words this means **in the target LANGUAGE**.
-  Required: produce a locale-native forbidden-word list. Examples:
-  - English → "you", "guys", "folks", "friends", "everyone"
-  - Hindi (Hindustani) → "doston", "dosto", "saathiyon", "yaaron", "aap log"
-  - Spanish → "amigos", "chicos", "muchachos", "ustedes" (where ambiguous)
-  - Arabic → "ya jama'a", "ya shabab", "ya asdiqaa'i"
-  An English-only forbidden list for a non-English LANGUAGE fails the v2.2 register-completeness gate.
+- Direct address: {forbidden / minimal / encouraged} — be explicit about the words this means (e.g., "no 'you', 'guys', 'doston', 'friends'")
 - Person: {3rd omniscient / 1st witness / 2nd guided}
 - Reading level: {target — e.g., grade 8 for accessible, grade 12 for academic}
 
@@ -181,16 +198,14 @@ For each of the {N} sections, specify:
 - Tone (may shift section-to-section within the register)
 - Mandatory content (e.g., "section 3 must introduce the named character", "section 5 must deliver the body-count reveal")
 
-9e. RETENTION MECHANICS (4+ required, all enforceable, all section-numbered)
-- Open loop: planted in section {N} at timestamp {0:00–0:08}, resolved in section {M}, **resolution requires a VO line in section M that explicitly closes the loop** (visual-only closure does not count for full-narration mode)
+9e. RETENTION MECHANICS (4+ required, all enforceable)
+- Open loop: planted in section {N}, resolved in section {M}
 - Mini-payoff cadence: every {60–90s}
 - Named subject (person / place / object) introduced by section {N}
 - Curiosity gap pattern: planted every {N} sections, resolved within {M}
 - Pattern interrupt: {device — single bell / silence / pull-back zoom} at every {Nth} section
 - Number / scale reveal at section {N}
 - Other niche-specific mechanics
-
-**Cross-check:** Trace each retention mechanic from plant to resolution. If any cannot be traced (missing section number, missing VO line, undefined trigger timing) it fails the v2.2 hook-resolution gate.
 
 9f. ON-SCREEN TEXT RULES
 - Max chars per card
@@ -252,6 +267,74 @@ VO: closing line
 [ON-SCREEN: final card]
 ```
 
+DECISION 10 — CHARACTER / SUBJECT CONTINUITY METHOD
+
+Pick the lock method based on TARGET_TOOL. The chosen method becomes a section in the master prompt called CHARACTER / SUBJECT CONTINUITY, and the Character Lock field in the MASTER IMAGE TEMPLATE references this method.
+
+10a. WHEN A LOCK IS REQUIRED
+- Niche features named figures (history, lore, mystery, biography)
+- Niche features focal objects that recur (sword, manuscript, ship, watch, named building)
+- Same human subject must appear across 3+ images
+
+10b. WHEN A LOCK IS NOT REQUIRED
+- No named/recurring subjects (abstract aesthetic, pure-architecture, satisfying-craft with anonymous hands)
+- Each image is self-contained (cinemagraph loops, single-shot ASMR)
+- In these cases, set `character_lock.method = "none"` in the JSON schema
+
+10c. PRIMARY LOCK METHODS (pick one or compose)
+
+Midjourney v7 (default for stills):
+- Syntax: `--cref <URL_FROM_FIRST_APPEARANCE> --cw 100`
+- `--cw 100` = full lock; `--cw 50` = face-only with pose flexibility
+- Add `--sref <STYLE_REF_URL>` for video-wide visual consistency
+
+Flux 1.1 Pro / Nano Banana:
+- Train a 4–8 image LoRA from first-appearance generations
+- Naming convention: `<subject_name>_v1.safetensors`
+- Load syntax: `<lora:subject_name_v1:0.85>`
+
+Kling 2.5 Master:
+- First-frame pinning across scenes
+- Generate stills with character lock (Midjourney/Flux), then feed as Kling start frames
+- Optionally pin section N's last frame as section N+1's first frame
+
+Runway Gen-4:
+- Upload reference image to Gen-4 References library
+- Tag in prompt: `@<reference_name>`
+- Max 3 references per scene
+
+Sora 2:
+- Define character once at top of storyboard
+- Reference by name in subsequent scene cards
+- Sora maintains continuity within a single storyboard automatically
+
+VEO 3.1:
+- Pass image as `image_condition` parameter
+- Use Vertex AI's image conditioning API for multi-shot consistency
+- Audio prompt is separate (VEO handles native audio gen)
+
+10d. LOCK FAILURE TRIGGERS (add to FAILSAFE list)
+- Named figure's face shape changes between sections
+- Named figure's dress / colors change without narrative cause
+- Named figure's distinguishing marks (scar, beard, eye color) drift
+- Focal object's shape / material changes across appearances
+- Character lock URL/ID missing from any scene featuring a named subject
+
+DECISION 11 — NUMBERING SCHEME
+
+Pick ONE of:
+
+Scheme A — Section-aligned (1-indexed):
+- "Section 1 / Stage 1 — Cold Open" through "Section N / Stage N — Coda"
+- Used when niche has fixed N-section narrative arc (history, lore, mystery, educational)
+
+Scheme B — Process-aligned (0-indexed):
+- "Stage 0 — Before / Abandoned / Inert" through "Stage N — Final Reveal"
+- Used when niche tracks continuous transformation (restoration, craft, exploration)
+- Stage 0 is the "before" state, Stage N is the payoff
+
+ENFORCE: Every section of the master prompt that references stages or sections must use the same scheme. Audit the emitted master prompt for mixed numbering before passing to OUTPUT COMPILER (Agent 05).
+
 ---
 
 ## RULES
@@ -261,3 +344,5 @@ VO: closing line
 - **Variants must be visually distinguishable.** If two variants would render nearly identically, collapse them.
 - **Anti-fail rules trump best-practice.** It's better to over-list failures than under-list.
 - **Escalation must be encoded in stages.** If stage 7 isn't visibly more premium / intense / large-scale than stage 5, the progression is broken.
+- **Numbering must be consistent.** If you pick Scheme A, never reference "Stage 0" anywhere in the prompt. If you pick Scheme B, never reference "Section 1" as a separate concept from "Stage 1".
+- **Character lock is mandatory if named subjects exist.** Generic "consistency" rules are not enough — emit the actual tool-specific syntax.

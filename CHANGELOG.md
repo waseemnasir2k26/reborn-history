@@ -9,36 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.2.0] — 2026-04-25
 
-Senior-analyst hardening pass. Closes 4 quality-gate holes, adds Phase 0 niche-type classifier, expands input validation, ships repeated-reuse infrastructure.
+Production-readiness release. Three critical fixes from real-world testing of v2.1.0 (the historical-reconstructions test output revealed gaps that this release closes).
 
 ### Added
-- `META-PROMPT.md` PHASE 0 — niche-type classifier (transformation-visible / retention-driver-based / dialogue-ensemble / audio-primary). Determines template adaptation downstream.
-- `META-PROMPT.md` input validation block — checks URL reachability, duration ≥ 5min, audio-visual mix, niche-string concreteness BEFORE Phase 0.
-- 4 new quality gates in Agent 05 + META-PROMPT QUALITY GATES section:
-  - **Variant safety** — combinatorial budget ≥ 300, axis independence test
-  - **Hook-to-open-loop resolution** — every retention mechanic must trace from plant to a section number with a closing VO line
-  - **Register completeness** — locale-native forbidden-word list (Hindi `doston`, Spanish `amigos`, Arabic `ya jama'a`, etc.) for non-English LANGUAGE
-  - **Audio-visual coherence** — hook-stage SFX must be permitted in audio-system Stage 0/1; no orphan audio cues
-- New post-generation commands: `niche type`, `validate`
-- `RECIPE.md`, `BATCH-VIDEOS.md`, `TROUBLESHOOTING.md`, `NICHE-REGISTRY.md` — workflow docs for repeated reuse
-- `ARCHITECTURE.md`, `FAQ.md`, `SECURITY.md` — onboarding + governance docs
-- `outputs/generated/.gitkeep` + README — canonical storage location for generated master prompts
-- `scripts/bulk-generate.py` — `niches.json` → batch invocation blocks for parallel master-prompt generation
-- `scripts/video-analyze.py` — real Phase-2 backend (youtube-transcript-api + PySceneDetect + optional Whisper + librosa BPM) replacing LLM video-analysis hallucination
-- `niches.example.json` — bulk-generate input format reference
-- `promptfoo.yaml` — eval harness w/ 3 niches × 2 models, 5+ assertions, llm-rubric, cost cap
-- `.github/workflows/validate.yml` — markdownlint + link-check + META-PROMPT structure validation + agent header validation
+- **NUMBERING CONSISTENCY RULE** (META-PROMPT, Agent 04 Decision 11) — every emitted master prompt picks ONE numbering scheme (Section-aligned 1-indexed OR Process-aligned 0-indexed) and applies it to HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO, LIGHTING, and SCRIPT. Eliminates the "Sections 1–8 vs Stages 0–8" inconsistency seen in v2.1.0 output.
+- **CHARACTER / SUBJECT CONTINUITY** as section #30 of the canonical structure — always present (with `method: none` if no named subjects exist).
+- **CHARACTER CONTINUITY METHODS** block in META-PROMPT covering Midjourney v7 (`--cref --cw`), Flux 1.1 Pro (LoRA), Kling 2.5 Master (first-frame pinning), Runway Gen-4 (`@reference` tags), Sora 2 (storyboard cards), VEO 3.1 (`image_condition`).
+- **Character Lock field** in MASTER IMAGE TEMPLATE — every still-image prompt now carries the tool-specific lock syntax inline.
+- **Character lock failure triggers** in FAILSAFE list (face shape change, dress change, distinguishing-mark drift, missing reference URL).
+- **DECISION 10** (Character Continuity Method) and **DECISION 11** (Numbering Scheme) added to Agent 04 prompt architect.
+- **Valid Scene JSON schema** — proper angle-bracket placeholders (`<int>`, `<string>`, `<true|false>`), no empty fields, parses as valid JSON when filled.
+- **Worked Scene JSON example** with real values (Pliny the Younger / Misenum scene) so downstream models know the exact shape to emit.
+- **Tool-specific Scene JSON extensions** for VEO 3.1, Kling 2.5, Runway Gen-4, Sora 2, Midjourney v7.
+- **Niche-specific Scene JSON extensions** for history (period_lock_check), restoration (completion_pct, regression_check), ASMR-craft (avg_shot_length_seconds).
+- New post-generation commands: `flip numbering`, `flip character lock to {method}`.
 
 ### Changed
-- `agents/04-prompt-architect.md` — Decision 9b (register lock) requires locale-native forbidden words; Decision 9e (retention mechanics) require traceable plant→section→VO closure
-- `agents/05-output-compiler.md` — quality gates restructured into 4 categories (Structure / Variant safety / Script / Audio-visual coherence / Identity)
-- `templates/MASTER-PROMPT-TEMPLATE.md` — placeholder ambiguity tightened; `{category}` and `{default_seconds}` now include inline examples
-- README.md — hero rework, quick CTA above fold, badges row
-- Issue templates renamed for v2 generalization: `anachronism-report` → `niche-fidelity-report`, `locale-request` → `language-locale-request`
-- `PUBLISH.md` — hardcoded Windows user path scrubbed
+- Canonical structure expanded from 34 to **35 sections** (CHARACTER / SUBJECT CONTINUITY inserted between MASTER IMAGE TEMPLATE and SCENE SYSTEM).
+- `META-PROMPT.md` — PHASE 4 now has 11 decisions (was 9); added Decision 10 (character continuity) and Decision 11 (numbering scheme).
+- `agents/04-prompt-architect.md` — DECISION 7 expanded with full schema + tool-specific + niche-specific extensions; DECISION 8 adds `Character Lock:` field; DECISION 10 + 11 added.
+- `agents/05-output-compiler.md` — assembly order updated to 35 items; quality gates expanded with 4 new checks (numbering consistency, JSON validity, character lock presence, character lock syntax).
+- `templates/MASTER-PROMPT-TEMPLATE.md` — Character Lock field in template skeleton; Scene JSON skeleton now uses valid placeholder syntax.
+- `SKILL.md` — version bumped 2.1.0 → 2.2.0; section list updated to 35; numbering rule + character continuity rule documented; new commands listed.
+
+### Fixed (root causes documented)
+- **Stage numbering inconsistency** — v2.1.0 master prompts could mix "Section 1–N" with "Stage 0–N" in the same output. Now enforced by Decision 11 + quality gate.
+- **Scene JSON malformed** — v2.1.0 emitted `"scene": ,` and `"focal_length_mm": ,` (empty values stripped during PDF rendering). Now uses `<int>` placeholders and includes a fully-emitted real-values example so the downstream model never produces empty fields.
+- **Character continuity unspecified** — v2.1.0 said "named figure must have locked appearance" but gave no method. Now requires explicit tool-specific lock syntax in MASTER IMAGE TEMPLATE and a dedicated CHARACTER CONTINUITY section.
 
 ### Rationale
-v2.1.0 generalized the kernel but assumed transformation-visible niches. Talking-head, comedy, music-only, and podcast niches passed quality gates while producing semantically hollow output. v2.2 closes that gap with explicit niche-type classification + 4 strict validation gates. The repeated-reuse layer (registry, bulk-generate, eval harness) was added because the user plans to ship 20+ master prompts and needed scaffolding to prevent chaos.
+v2.1.0 was used to generate a real master prompt for the historical-reconstructions niche. That output was 95% production-ready but had three blockers: numbering ambiguity (downstream model would have been confused about which is "first"), invalid JSON (would have crashed VEO3 and Kling), and missing character lock method (would have caused face-drift across sections — Midjourney's well-known weak point). v2.2.0 closes all three. The historical test output's content quality stays — what changes is how reliably any user can take the output and run it through a real pipeline without manual patching.
 
 ---
 

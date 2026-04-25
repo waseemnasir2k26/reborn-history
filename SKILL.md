@@ -5,16 +5,14 @@ name: reborn-master-prompt-generator
 version: 2.2.0
 description: |
   Meta-skill that generates a niche-locked master prompt for AI video creation
-  given a NICHE and a reference YOUTUBE_URL. Runs Phase 0 (niche-type classifier)
-  + 5-agent reverse-engineering pipeline (Niche Intelligence → Video Analysis →
-  Pattern Engine → Prompt Architect → Output Compiler) and emits a single
-  paste-and-run master prompt conforming to a 34-section canonical structure
-  including a SCRIPT WRITING SYSTEM section with mode-based narration
-  (full / minimal / text-only / silent), register lock, hook formula, retention
-  mechanics, and cue notation. v2.2 adds 4 strict quality gates (variant safety,
-  hook-resolution traceability, locale-native register completeness, audio-visual
-  coherence). The output prompt is topic-agnostic within the niche and reusable
-  across an entire channel.
+  given a NICHE and a reference YOUTUBE_URL. Runs a 5-agent reverse-engineering
+  pipeline (Niche Intelligence → Video Analysis → Pattern Engine → Prompt
+  Architect → Output Compiler) and emits a single paste-and-run master prompt
+  conforming to a 35-section canonical structure including SCRIPT WRITING
+  SYSTEM (mode-based narration), CHARACTER / SUBJECT CONTINUITY (tool-specific
+  lock methods), valid SCENE JSON schema with worked example, and enforced
+  numbering consistency. The output prompt is topic-agnostic within the niche
+  and reusable across an entire channel.
 inputs:
   - NICHE (required)
   - YOUTUBE_URL (required)
@@ -23,7 +21,7 @@ inputs:
   - LANGUAGE (optional, default English)
   - EXTRA_NOTES (optional)
 outputs:
-  - master_prompt (markdown, 1800+ words, 34 sections)
+  - master_prompt (markdown, 1500+ words, 33 sections)
 entrypoint: META-PROMPT.md
 license: MIT
 ```
@@ -37,7 +35,7 @@ license: MIT
 3. Append your INPUT block at the bottom.
 4. Submit. Receive the master prompt.
 
-## Canonical output sections (34)
+## Canonical output sections (35)
 
 The generated master prompt MUST contain, in order:
 
@@ -65,27 +63,50 @@ The generated master prompt MUST contain, in order:
 22. TRANSITION SYSTEM
 23. PACING
 24. AUDIO SYSTEM
-25. **SCRIPT WRITING SYSTEM** (always present; MODE = full-narration / minimal-narration / text-only / silent)
+25. SCRIPT WRITING SYSTEM (always present; MODE = full-narration / minimal-narration / text-only / silent)
 26. LIGHTING SYSTEM
 27. COLOR GRADING LOCK
 28. IMAGE QUALITY SYSTEM
-29. MASTER IMAGE TEMPLATE
-30. SCENE SYSTEM (JSON schema)
-31. OUTPUT CONTROL
-32. FAILSAFE
-33. STYLE LOCK
-34. END OF PROMPT marker
+29. MASTER IMAGE TEMPLATE (now includes `Character Lock:` field)
+30. **CHARACTER / SUBJECT CONTINUITY** (always present; method = midjourney_cref / flux_lora / kling_first_last_frame / runway_references / sora_storyboard / veo_image_condition / none)
+31. SCENE SYSTEM (JSON schema with valid placeholder syntax + worked example)
+32. OUTPUT CONTROL
+33. FAILSAFE
+34. STYLE LOCK
+35. END OF PROMPT marker
+
+## Numbering consistency rule (CRITICAL)
+
+Every emitted master prompt picks ONE numbering scheme and applies it everywhere:
+- **Scheme A (Section-aligned, 1-indexed):** Section 1 = cold open, Section N = coda. Used for fixed-arc niches (history, lore, mystery).
+- **Scheme B (Process-aligned, 0-indexed):** Stage 0 = before state, Stage N = final reveal. Used for transformation niches (restoration, craft, exploration).
+- HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO, LIGHTING, and SCRIPT all reference the same scheme. No mixed indexing.
+
+## Character continuity (CRITICAL when named subjects exist)
+
+If the niche features named figures or recurring focal objects, the master prompt MUST emit tool-specific lock syntax:
+- Midjourney v7: `--cref <URL> --cw 100`
+- Flux 1.1 Pro: `<lora:name_v1:0.85>`
+- Kling 2.5: first-frame pinning
+- Runway Gen-4: `@reference_name` tags
+- Sora 2: storyboard character cards
+- VEO 3.1: `image_condition` parameter
+
+If no named subjects exist, the section still appears with `method: none`.
 
 ## Quality gates
 
 - Variation engine: ≥ 4 axes × ≥ 5 variants
 - Stage progression: ≥ 6 niche-specific stages
+- Numbering consistent across all sections (no mixed Section/Stage indexing)
 - Audio system: maps SFX + music + VO to every stage
-- **Script Writing System: explicit MODE, full register lock, second-by-second hook formula, ≥ 4 retention mechanics, cue notation reference, closing formula, ≥ 6 anti-fail rules, worked output example**
+- Script Writing System: explicit MODE, full register lock, second-by-second hook formula, ≥ 4 retention mechanics, cue notation reference, closing formula, ≥ 6 anti-fail rules, worked output example
+- Character / Subject Continuity: explicit method + tool-specific syntax in MASTER IMAGE TEMPLATE
+- Scene JSON: valid syntax (parses as JSON), filled fields, worked example with real values
 - Lighting system: progresses across stages
-- FAILSAFE: ≥ 8 niche-specific rules
+- FAILSAFE: ≥ 8 niche-specific rules including character lock failures (if applicable)
 - Style Lock: focal length + grade + tones specified
-- Length: ≥ 1800 words (script section adds ~300 words to baseline)
+- Length: ≥ 1800 words
 - Zero unfilled `{placeholders}` in final output
 
 ## Special commands (post-generation)
@@ -96,6 +117,8 @@ The generated master prompt MUST contain, in order:
 - `loosen` — expand examples and edge cases by 30–40%
 - `script only` — emit only the SCRIPT WRITING SYSTEM section
 - `flip mode to {full-narration|minimal-narration|text-only|silent}` — regenerate SCRIPT WRITING SYSTEM with that mode
+- `flip numbering` — switch between Scheme A (Section-aligned) and Scheme B (Process-aligned)
+- `flip character lock to {midjourney_cref|flux_lora|kling_first_last_frame|runway_references|sora_storyboard|veo_image_condition|none}` — regenerate CHARACTER CONTINUITY section with that method
 
 ## Safety / scope
 

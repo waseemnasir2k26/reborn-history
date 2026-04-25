@@ -29,16 +29,7 @@ LANGUAGE: <optional — English / Hindi / Spanish / Arabic / etc. Default: Engli
 EXTRA_NOTES: <optional — anything the user wants honored>
 ```
 
-### Input validation — run before Phase 0
-
-Before classifying the niche, validate the inputs:
-
-1. **YOUTUBE_URL reachable?** If you cannot fetch the URL, **ask the user to paste**: title, channel, duration, the first 30 seconds described frame-by-frame, transcript snippet, and 3–5 visual stills. Do not fabricate.
-2. **Duration ≥ 5 minutes?** If the reference is a Short (< 60s) or sub-5-minute clip, the niche architecture for `longform` will not transfer cleanly. Warn the user and ask: *"Reference video is {N}s. Generate a Shorts-format master prompt instead, or do you have a longer reference video?"*
-3. **Audio-visual mix detected?** If the reference is voice-only (podcast clip), music-only (DJ mix), or muted (silent ASMR), confirm the niche-type before continuing — defaulting to `transformation-visible` will produce hollow output.
-4. **Niche string non-empty + concrete?** Reject vague NICHE values like "motivation", "general AI content", "viral videos". Ask user to specify a concrete sub-niche.
-
-Do not silently proceed with bad inputs. A 30-second clarification saves a wasted master prompt generation.
+If a YouTube URL was provided but you cannot fetch it, **ask the user to paste**: title, channel, duration, the first 30 seconds described frame-by-frame, transcript snippet, and 3–5 visual stills. Do not fabricate.
 
 ---
 
@@ -53,26 +44,9 @@ The output **MUST follow the canonical master-prompt structure** (see "OUTPUT FO
 
 ---
 
-## INTERNAL PIPELINE — 6 PHASES (run silently, in order)
+## INTERNAL PIPELINE — 5 PHASES (run silently, in order)
 
 Run these phases as internal reasoning. Do **NOT** emit phase outputs to the user unless they explicitly ask `show phase {N}`. The default visible output is the final master prompt only.
-
-### PHASE 0 — NICHE TYPE CLASSIFIER
-
-Before any other phase, classify the NICHE into exactly one of these 4 types. The chosen type determines which template skeleton + rule-set to apply downstream.
-
-| Type | Engagement driver | Examples | Required template adaptations |
-|------|-------------------|----------|-------------------------------|
-| **transformation-visible** | Visible state change end-to-end | mansion restoration, watch restoration, abandoned-place reclamation, before/after transformation, satisfying-craft | Stage progression mandatory (6+ stages), per-stage continuity rule, no-regression rule strict, payoff = visible final state |
-| **retention-driver-based** | Information escalation, narrative hooks, no visible transformation | grimdark history, true-crime, science explainer, mystery breakdown, lore deep-dive | Stage progression replaced by **narrative-arc progression** (cold-open → context → escalation → climax → coda); continuity rules apply to **established devastation/atmosphere state**, not visible change |
-| **dialogue-ensemble** | Multi-character interaction, performance | period drama, sketch comedy, podcast-on-camera, narrative skit | "ONE action per stage" rule replaced by **"ONE narrative beat per stage"**; named-subject rule extended to track 2-5 characters; staggered-entrance rules added |
-| **audio-primary** | Audio is the content, visual supports | DJ mix, music production breakdown, ASMR-recording, podcast-with-visualizer | SCRIPT WRITING SYSTEM becomes **AUDIO COMPOSITION SYSTEM**; stage progression replaced by **track structure**; visual sections collapsed to a single VISUAL ACCOMPANIMENT block |
-
-If you cannot classify w/ ≥80% confidence, ask the user: *"Does the engagement of this niche depend more on (a) visible transformation, (b) information / story escalation, (c) dialogue between characters, or (d) audio composition?"*
-
-If a niche is hybrid (e.g., "abandoned-mansion exploration with historical narration" = transformation-visible + retention-driver-based), pick the **dominant** axis and note the secondary. The downstream phases will inherit hybrid handling rules from Agent 04.
-
-Output (internal): `niche_type: <one of 4>` + `secondary_axis: <optional>` + `rationale: <one sentence>`.
 
 ### PHASE 1 — NICHE INTELLIGENCE
 
@@ -101,7 +75,7 @@ From the YOUTUBE_URL (or user-pasted observations), extract observable structure
 8. **Transformation logic** — what changes from start to end? what is the payoff?
 9. **Loop logic** — what at the end pulls the viewer back to the next video?
 
-Output (internal): structured analysis matching the `agents/02-video-analyzer.md` format.
+Output (internal): structured analysis matching reborn-history's `02-video-analysis.md` format.
 
 ### PHASE 3 — PATTERN EXTRACTION
 
@@ -126,6 +100,33 @@ Now build the master prompt. Decide:
 7. **JSON scene schema** — what fields each scene needs for the target tool.
 8. **Image template** — the canonical block every image prompt must conform to.
 9. **Script system** — narration mode (full / minimal / text-only / silent), register lock (tone, pace, sentence length, vocabulary, direct-address rules), hook formula for first 8 seconds, per-section script structure (word count + duration + tone targets), retention mechanics (open loops, mini-payoffs, named-subject introduction, pattern interrupts), on-screen text rules, SFX/music/pause cue notation, citation format if applicable, closing-line formula, and script-specific anti-fail list.
+10. **Character / subject continuity method** — explicit mechanism to keep named figures, focal objects, and locked subjects visually consistent across all images. Choose the method based on TARGET_TOOL and emit the syntax inline. (See "CHARACTER CONTINUITY METHODS" section below.)
+
+### NUMBERING CONSISTENCY RULE (CRITICAL)
+
+When emitting the master prompt, **Sections and Stages MUST use the same numbering scheme.** Pick ONE of:
+
+- **Scheme A — Section-aligned (1-indexed):** "Section 1 / Stage 1 — Cold Open", ..., "Section 8 / Stage 8 — Coda". Used when the niche has a fixed N-section narrative arc (history, lore, mystery).
+- **Scheme B — Process-aligned (0-indexed):** "Stage 0 — Abandoned", "Stage 1 — Debris Removal", ..., "Stage 10 — Final Reveal". Used when the niche tracks a continuous transformation process (restoration, craft, exploration) where Stage 0 is the "before" state.
+
+**Rules:**
+- The HIGH RETENTION SYSTEM section, the {NICHE_PROCESS} STAGES section, the PACING section, the AUDIO SYSTEM section, and the LIGHTING SYSTEM section MUST all reference the SAME numbering scheme.
+- If you use "Section 1" anywhere, do not use "Stage 0" anywhere else in the same prompt.
+- The HOOK FORMULA in SCRIPT WRITING SYSTEM should reference the same numbering ("first VO line in Section 1" if Scheme A; "first VO line in Stage 1" if Scheme B — both meaning the opening narrative beat).
+- The first stage/section is the cold open or the "before" state — never the context drop or escalation.
+
+### CHARACTER CONTINUITY METHODS (CRITICAL)
+
+If the niche features named figures, focal objects, or any subject that must persist visually across multiple images, the master prompt MUST specify the lock method explicitly. Pick based on TARGET_TOOL:
+
+- **Midjourney v7:** `--cref <REFERENCE_IMAGE_URL> --cw 100` for full character lock; `--cw 50` for face-only with pose flexibility; `--sref <STYLE_REF_URL>` for style consistency. Generate the named figure ONCE in the first appearance, save the URL, then append `--cref` to every subsequent prompt featuring that figure.
+- **Flux 1.1 Pro / Nano Banana:** Use the IP-Adapter or character LoRA. Train a 4–8 image LoRA on the first appearance generations, then load the LoRA on all subsequent generations. Note the LoRA name in the master prompt's MASTER IMAGE TEMPLATE.
+- **Kling 2.5 Master:** Use "first frame + last frame" pinning. The first image of section N+1 must be derived from the last frame of section N for continuity. For named figures across non-adjacent scenes, generate via the still-image tool with character lock first, then pass to Kling as start frame.
+- **Runway Gen-4:** Use Gen-4 References. Upload the named figure's reference image, lock pose/expression with the `@reference` tag in prompt.
+- **Sora 2:** Use the storyboard feature with character cards — define the character once at the top of the storyboard, reference by name in subsequent scenes.
+- **VEO 3.1:** Pass the still image as the first-frame condition, narrate motion only. For multi-shot consistency, use Vertex AI's image conditioning with the same reference image across scenes.
+
+The master prompt's MASTER IMAGE TEMPLATE MUST include a `Character Lock:` field with the syntax for the chosen tool, and the FAILSAFE MUST include "named figure appearance changes between sections" as a regenerate trigger.
 
 ### PHASE 5 — OUTPUT COMPILATION
 
@@ -451,31 +452,157 @@ MASTER IMAGE TEMPLATE
 
 [SECTION NAME] — [STAGE NAME]
 Camera: {fixed framing rule}
+Lens: {focal length}
 Environment: {continuity from previous}
 Global Condition: ~90–95% complete
 Action: ONE clear action
 Coverage: full frame
 {People/Workers/Subjects}: {consistency rule}
+Character Lock: {tool-specific syntax — see CHARACTER CONTINUITY block below}
 Lighting: {stage-appropriate}
 Audio: {matching action}
+Color: {graded per Color Lock}
 Quality: 8K ultra detailed, sharp, cinematic
-Forbidden: partial areas, rework, mixed states
+Forbidden: partial areas, rework, mixed states, {niche-specific anti-patterns}
 Result: stage complete
+
+--------------------------------------------------
+CHARACTER / SUBJECT CONTINUITY
+--------------------------------------------------
+
+LOCK METHOD: {chosen based on TARGET_TOOL}
+
+WHEN A NAMED FIGURE OR LOCKED SUBJECT APPEARS:
+
+First appearance:
+- Generate the figure with full descriptor (age, build, dress, distinguishing marks)
+- Save the resulting image URL / asset ID
+- Record it in the per-scene JSON under "character_lock.reference_url_or_id"
+
+Subsequent appearances (same figure across sections):
+- Append the lock syntax to every prompt featuring that figure
+- Verify visually: face shape, build, dress, distinguishing marks must all match
+- If mismatch detected, regenerate (FAILSAFE trigger)
+
+TOOL-SPECIFIC LOCK SYNTAX:
+
+Midjourney v7:
+- Append `--cref <URL_FROM_FIRST_APPEARANCE> --cw 100` for full lock
+- Use `--cw 50` for face-only lock with pose flexibility
+- For style consistency across whole video, also add `--sref <STYLE_REF_URL>`
+
+Flux 1.1 Pro / Nano Banana:
+- Train a 4–8 image LoRA from first-appearance generations (named e.g. `pliny_younger_v1.safetensors`)
+- Load LoRA on every subsequent generation: `<lora:pliny_younger_v1:0.85>`
+- Cross-LoRA conflicts: load max 2 LoRAs per scene (one character + one style)
+
+Kling 2.5 Master:
+- Pass first-appearance still as the "start frame"
+- For continuity across non-adjacent scenes, generate via still-image tool first (with character lock above), then feed to Kling
+- Optionally pin "end frame" of section N as "start frame" of section N+1 transition shot
+
+Runway Gen-4:
+- Upload reference image to Gen-4 References
+- Tag in prompt: `@<reference_name>` (e.g., `@pliny`)
+- Multiple references per scene supported (max 3)
+
+Sora 2:
+- Define character once at the top of storyboard with character card
+- Reference by name in subsequent scene prompts
+- Sora maintains continuity within a single storyboard automatically
+
+VEO 3.1:
+- Pass still image as `image_condition` parameter (first-frame condition)
+- For multi-shot consistency, use Vertex AI's image conditioning API with the same reference URL across scenes
+- Audio prompt is separate — VEO generates motion + audio from still + text
 
 --------------------------------------------------
 SCENE JSON SYSTEM
 --------------------------------------------------
 
+EMIT RULES:
+- All values MUST be filled — never leave a field blank
+- Use angle-bracket placeholders ONLY in the schema definition; replace with real values when emitting per-scene JSON
+- Every JSON block must parse as valid JSON (use double quotes, no trailing commas, no comments inside JSON)
+- Numbers are unquoted; strings are quoted; booleans are unquoted (`true` / `false`)
+
+SCHEMA (definition — angle-brackets show expected types):
+
 {
-  "scene": number,
-  "duration": {seconds},
-  "start_state": "Image N",
-  "end_state": "Image N+1",
+  "scene": <int>,
+  "section": <int 1..N>,
+  "stage": <int matching numbering scheme>,
+  "duration_seconds": <int 5..10>,
+  "start_state": "<one-sentence description of Image N>",
+  "end_state": "<one-sentence description of Image N+1>",
+  "camera": {
+    "framing_class": "<one of: wide_establishing | dolly_in | low_angle_hero | high_angle_descent | handheld_ots | macro_inset>",
+    "focal_length_mm": <int>,
+    "movement": "<one of: locked | slow_dolly_in | slow_dolly_out | parallax_2_5d | ken_burns>",
+    "movement_seconds": <int 0..8>
+  },
+  "lighting": {
+    "key_temp_K": <int e.g. 3200>,
+    "shadow_density_pct": <int 0..100>,
+    "source_count": <int 1..3>
+  },
+  "audio": {
+    "music_cue": "<one of: MUSIC IN | MUSIC OUT | MUSIC SWELL | MUSIC DUCK | continue | silent>",
+    "sfx": ["<sfx_1>", "<sfx_2>"],
+    "vo_present": <true|false>,
+    "silence_seconds": <int 0..8>
+  },
+  "character_lock": {
+    "method": "<one of: midjourney_cref | flux_lora | kling_first_last_frame | runway_references | sora_storyboard | veo_image_condition | none>",
+    "reference_url_or_id": "<URL or LoRA name or 'none' if no named subject in this scene>"
+  },
+  "period_lock_check": "<one of: passed | failed>",
   "rules": [
     "continuity",
     "single action",
     "real process",
-    "no instant change"
+    "no instant change",
+    "<niche-specific rule e.g. era-locked artifacts>"
+  ]
+}
+
+EMITTED EXAMPLE (what a real per-scene block looks like, fully filled):
+
+{
+  "scene": 7,
+  "section": 4,
+  "stage": 4,
+  "duration_seconds": 8,
+  "start_state": "Pliny the Younger seated at his desk in Misenum, mid-afternoon light, ink quill raised",
+  "end_state": "Pliny lowering quill onto parchment, first word forming, distant tremor visible in window",
+  "camera": {
+    "framing_class": "dolly_in",
+    "focal_length_mm": 35,
+    "movement": "slow_dolly_in",
+    "movement_seconds": 3
+  },
+  "lighting": {
+    "key_temp_K": 3200,
+    "shadow_density_pct": 75,
+    "source_count": 1
+  },
+  "audio": {
+    "music_cue": "continue",
+    "sfx": ["quill_scratching", "distant_low_rumble"],
+    "vo_present": true,
+    "silence_seconds": 0
+  },
+  "character_lock": {
+    "method": "midjourney_cref",
+    "reference_url_or_id": "https://cdn.midjourney.com/<hash>/0_0.png --cw 100"
+  },
+  "period_lock_check": "passed",
+  "rules": [
+    "continuity",
+    "single action",
+    "real process",
+    "no instant change",
+    "era-locked artifacts (no glass windows pre-100 CE, oil lamp not candle)"
   ]
 }
 
@@ -526,40 +653,24 @@ END OF PROMPT
 
 Before you return the final master prompt, verify:
 
-**Structure gates:**
 - [ ] Every section from the canonical structure is present (none skipped)
-- [ ] Stage progression has at least 6 stages, all niche-specific (or 6 narrative beats for retention-driver-based niches)
+- [ ] Variation engine has 4+ axes, 5+ variants each
+- [ ] Stage progression has at least 6 stages, all niche-specific
 - [ ] Audio system maps audio to every stage (no "general background music")
 - [ ] Lighting system progresses across stages (not static)
 - [ ] At least 8 anti-fail rules in FAILSAFE
 - [ ] Master image template is fully specified (no placeholders)
-- [ ] No `{[A-Z_]+}` unfilled placeholder tokens remain in the output
-- [ ] Output is 1,800+ words and reads like the reference template
-- [ ] No mention of "TBD", "varies", "user choice", or unfilled brackets
-
-**Variant safety gates:**
-- [ ] Variation engine has 4+ axes, 5+ variants each
-- [ ] **Combinatorial variant budget ≥ 300** (multiply axis variant counts; flag if < 300 because a 50-video sprint will repeat)
-- [ ] **No two axes are correlated** (e.g., POV=Aerial implies CAMERA=wide; not independent → variant collapse)
-
-**Script gates:**
 - [ ] **SCRIPT WRITING SYSTEM is present with explicit MODE** (full-narration / minimal-narration / text-only / silent)
 - [ ] **Register lock specifies tone, wpm range, sentence length, vocabulary, direct-address rule**
 - [ ] **Hook formula breaks down first 8 seconds second-by-second**
 - [ ] **Retention mechanics list at least 4 enforceable mechanisms** (open loop, mini-payoff cadence, named subject, pattern interrupt)
-- [ ] **Hook-to-open-loop resolution is traceable** — the question planted in 0:00–0:08 must be resolved at a named section number, and that section must contain a VO line that closes it (not just visual)
 - [ ] **Script anti-fail list has at least 6 niche-specific failures**
-- [ ] **Forbidden-word list is language-native** — for non-English languages, list locale-specific direct-address words (e.g., Hindi: "doston", "dosto", "saathiyon"; Spanish: "amigos", "chicos"; not just English equivalents translated)
 - [ ] **Script output format example is given so the downstream model knows the exact shape to emit**
-
-**Audio-visual coherence gate:**
-- [ ] **Hook-stage SFX is permitted in Stage 0/1 of the audio system** — if HOOK FORMULA says `[SFX: bell tolls at 0:06]` but AUDIO SYSTEM Stage 0 forbids bells, that's a self-contradiction. Audit cue-by-cue.
-- [ ] **Music in/out cues align with section boundaries** — no `[MUSIC IN]` mid-section without explicit beat alignment.
-
-**Identity gate:**
+- [ ] Output is 1,500+ words and reads like the reference template
+- [ ] No mention of "TBD", "varies", "user choice", or unfilled brackets
 - [ ] Niche identity is so locked that two different users would generate visually similar videos for the same topic
 
-If any gate fails: regenerate that section before emitting. Do not silently downgrade.
+If any gate fails: regenerate that section before emitting.
 
 If the niche is one where narration adds no value (pure visual ASMR-craft, ambient cinemagraphs, abstract aesthetic loops), the SCRIPT WRITING SYSTEM section is still present but MODE is set to `silent` or `text-only` and the section explicitly states that VO is forbidden — the section is never omitted entirely.
 
@@ -580,10 +691,6 @@ If `loosen` is requested, expand examples and edge cases by 30–40%.
 If `script only` is requested, emit only the SCRIPT WRITING SYSTEM section (useful for pasting into a separate scriptwriting workflow).
 
 If `flip mode to {full-narration|minimal-narration|text-only|silent}` is requested, regenerate the SCRIPT WRITING SYSTEM section with that mode.
-
-If `niche type` is requested, emit Phase 0 output (the classification + rationale).
-
-If `validate` is requested, run all quality gates against the existing master prompt and report pass/fail for each. Do not regenerate; only audit.
 
 ---
 
