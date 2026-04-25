@@ -6,7 +6,7 @@ Thanks for considering a contribution. This skill is designed to be forked, exte
 
 ### High-value PRs
 
-1. **New locales.** Fork the Hindi master prompt as a template. Build a register-lock vocabulary table for your language (e.g. Spanish: archaic register vs. modern; Arabic: Fusha vs. dialectal; Mandarin: 文言 vs. 白话). File: `prompts/MASTER-PROMPT-REBORN-<LANG>.md`.
+1. **New locales.** Fork the Hindi master prompt as a template (`prompts/legacy/MASTER-PROMPT-REBORN-HINDI.md`). Build a register-lock vocabulary table for your language (e.g. Spanish: archaic register vs. modern; Arabic: Fusha vs. dialectal; Mandarin: 文言 vs. 白话). File new compilations under `prompts/legacy/MASTER-PROMPT-REBORN-<LANG>.md` or — preferred — regenerate via `META-PROMPT.md` with LANGUAGE = your locale.
 2. **New variant axes.** Current engine = 6×7×5×5 = 1,050 combos. Propose a 5th axis (SCALE, EMOTIONAL VALENCE, NARRATOR-AGE) and how it interacts with the existing four.
 3. **New image-engine sub-prompts.** Add Sora 2 / Wan 2.5 / Hailuo / Pika 2 syntax variations to Phase 2. File a separate `prompts/sub-prompts/PHASE2-<engine>.md`.
 4. **More example INPUT blocks.** One per major historical era — antiquity, classical, medieval, early modern, industrial, 20th-century. Especially welcome: non-Western events (Saqoot-e-Granada 1492, Tenochtitlan 1521, Beijing 1900, Bengal Famine 1943).
