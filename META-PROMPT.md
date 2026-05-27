@@ -703,25 +703,73 @@ EMITTED EXAMPLE (what a real per-scene block looks like, fully filled):
 }
 
 --------------------------------------------------
-OUTPUT CONTROL
+OUTPUT CONTROL (CRITICAL — ENFORCED 3-PART FLOW)
 --------------------------------------------------
 
+EVERY video production has 3 mandatory output parts. The master prompt MUST emit ALL THREE parts in order. Skipping ANY part means the user cannot produce a video.
+
+PART 1 — SCRIPT (text)
+Required IF INCLUDE_SCRIPT = yes. Skipped cleanly IF INCLUDE_SCRIPT = no.
+Output: full script in text form, all sections, with cue notation. User feeds this into ElevenLabs / TTS for voiceover.
+
+PART 2 — IMAGE PROMPTS (one per still image)
+ALWAYS required, regardless of INCLUDE_SCRIPT. Never skipped.
+Output: N+1 image prompts (or N if Sora 2), each formatted per MASTER IMAGE TEMPLATE. User feeds these into Midjourney v7 / Flux / Nano Banana to generate the still images.
+
+PART 3 — SCENE JSON (one per motion clip)
+ALWAYS required. Never skipped.
+Output: N scene JSON blocks, each pairing two adjacent images from Part 2 with motion + audio + camera + lighting metadata. User feeds these into VEO 3.1 / Kling 2.5 / Runway Gen-4 to generate motion clips.
+
+ENFORCED ORDER (the model MUST emit in this sequence — no reordering, no skipping):
+
 IF INCLUDE_SCRIPT = yes:
-  EXECUTION ORDER (when the user runs this master prompt with a TITLE):
-  1. Write the full script in text first (per SCRIPT WRITING SYSTEM rules)
-  2. ASK the user: "What is your target voiceover length in MINUTES?"
-  3. Compute scenes and images per SCRIPT-TO-SCENES PIPELINE (TOTAL_SECONDS = MIN × 60; SCENES = floor(SECONDS / 8); IMAGES = SCENES + 1)
-  4. Emit 2 sections per response, each containing: a) script block; b) image prompts for that section's image range; c) scene JSON for that section's scene range
-  5. STOP after each pair, wait for user to type "continue"
+  RESPONSE 1 — Emit FULL script (all sections) in text. Then ASK: "What is your target voiceover length in MINUTES?" Then STOP.
+  RESPONSE 2 — After user answers, compute scenes/images per SCRIPT-TO-SCENES PIPELINE. Confirm computed counts to user (e.g., "8 min × 60 = 480 sec → 60 scenes → 61 images. Allocating: Section 1 = 2 scenes / Images 1–3, Section 2 = ... etc."). Then STOP and wait for user to type "continue" before emitting prompts.
+  RESPONSE 3 onward — Emit 2 sections per response. Each response MUST contain BOTH parts in this exact order:
+    a) IMAGE PROMPTS for those 2 sections' image range (e.g., for Sections 1+2: emit Images 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 — one full prompt per image, NOT just numbers, NOT just JSON references)
+    b) SCENE JSON for those 2 sections' scene range (e.g., for Sections 1+2: emit Scenes 1, 2, 3, 4, 5, 6, 7, 8, 9 — one full JSON block per scene)
+  After each response, STOP. Wait for "continue".
 
 IF INCLUDE_SCRIPT = no:
-  EXECUTION ORDER (when the user runs this master prompt with a TITLE):
-  1. NO script. Skip directly to image-prompt + scene-JSON emission.
-  2. Scene count is derived from the PACING section's images-per-stage map.
-  3. Emit 2 sections per response, each containing: a) Transition image + JSON; b) Image prompts for that section's stages; c) Scene JSON per stage
-  4. STOP after each pair, wait for user to type "continue"
+  RESPONSE 1 — Confirm scene/image counts based on PACING section (e.g., "7 stages × 13 scenes = 91 scenes / 92 images"). State the per-stage allocation. Then STOP and wait for user to type "continue".
+  RESPONSE 2 onward — Emit 2 stages per response. Each response MUST contain BOTH parts in this exact order:
+    a) Transition image prompt + transition JSON for the stage open
+    b) IMAGE PROMPTS for every scene in that stage (one full Midjourney-ready prompt per image, NOT just numbers, NOT just descriptions)
+    c) SCENE JSON for every scene in that stage (one full JSON block per scene)
+  After each response, STOP. Wait for "continue".
 
-DO NOT emit all sections at once. The 2-sections-per-response cadence is mandatory in both modes.
+EMIT FORMAT (per image prompt — use this exact shape):
+
+```
+[IMAGE N — STAGE/SECTION X — STAGE_LABEL]
+Camera: 24mm wide, eye-level, locked tripod
+Lens: 24mm prime
+Environment: <full description, era-locked, region-locked, condition state>
+Global Condition: completion_pct = X%, regression_check = passed
+Action: ONE clear action (e.g., "rotten porch board pulled away from joist")
+Coverage: full frame, foreground action visible
+Subjects: hands-only OR named figure with full descriptor
+Character Lock: image_condition: <BUILDING_REF_URL or NAMED_FIGURE_REF_URL>
+Lighting: <key direction, K, shadow density %, source count>
+Color: <per Color Grading Lock for current stage>
+Quality: 8K ultra detailed, sharp, cinematic, accurate material rendering
+Forbidden: <stage-specific anti-patterns>
+Result: image ready as Scene N start frame + Scene N-1 end frame
+
+Midjourney prompt: <single-line MJ-ready prompt with --ar 16:9 --v 7 --cref <URL> --cw 100>
+```
+
+EMIT FORMAT (per scene JSON — use the SCHEMA in SCENE JSON SYSTEM with all values filled).
+
+ABSOLUTE RULES — VIOLATIONS TRIGGER FAILSAFE:
+- DO NOT emit scene JSON without the corresponding image prompts in the same response
+- DO NOT emit image prompts as a list of subject lines only — every image prompt MUST be a fully-filled MASTER IMAGE TEMPLATE block with all 13 fields PLUS a single-line Midjourney-ready string
+- DO NOT skip Part 2 (image prompts) and jump straight to Part 3 (scene JSON) — this is the most common failure mode
+- DO NOT emit all sections at once — the 2-sections-per-response cadence is mandatory
+- DO NOT emit script and JSON in the same response — script gets its own response (Response 1), JSON comes later (Response 3+)
+- DO NOT emit JSON before user has confirmed VO length (if INCLUDE_SCRIPT = yes) or confirmed scene counts (if no)
+
+WHY THIS MATTERS: A YouTube video pipeline needs three separate inputs — a script for TTS, stills for the image model, and JSON for the motion model. Emitting scene JSON without image prompts means the user has no way to generate the stills VEO needs as image_condition. The pipeline breaks. Always emit both Part 2 and Part 3 in every prompt-generation response.
 
 --------------------------------------------------
 FAILSAFE

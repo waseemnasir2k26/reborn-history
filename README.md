@@ -2,7 +2,7 @@
 
 > **A meta-skill that turns any niche + reference YouTube video into a reusable master prompt for AI video generation.** Paste your NICHE and a YOUTUBE_URL. Get back a complete, niche-locked master prompt — ready to use for every topic in that niche, forever.
 
-[![Version](https://img.shields.io/badge/version-2.3.0-brightgreen)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.4.0-brightgreen)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Skill format: SKILL.md](https://img.shields.io/badge/format-SKILL.md-blue)](SKILL.md)
 [![Output: Master Prompt](https://img.shields.io/badge/output-Master%20Prompt-green)](META-PROMPT.md)

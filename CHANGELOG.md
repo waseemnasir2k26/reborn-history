@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.4.0] — 2026-04-26
+
+Critical execution-flow fix from real-world testing. v2.3.0 master prompts emitted scene JSON without image prompts (mansion test) or skipped script entirely (history test). Root cause: OUTPUT CONTROL listed deliverables as a flat list, which the model treated as a menu. v2.4.0 enforces strict 3-part ordering (script → images → JSON) with explicit response-by-response sequencing.
+
+### Why this release
+A YouTube video pipeline has three distinct deliverables:
+1. **Script (text)** — user feeds into ElevenLabs / TTS for voiceover
+2. **Image prompts** — user feeds into Midjourney / Flux to generate stills
+3. **Scene JSON** — user feeds into VEO 3.1 / Kling to generate motion clips
+
+Without all three, the user cannot produce a video. v2.3.0 generated master prompts that emitted only #3 (mansion test) or only #3 with no script (history test). The user reported: "JSON prompts diye, images nahi diye" and "script diya hi nahi". This release closes both gaps at the architectural level.
+
+### Added
+- **OUTPUT CONTROL — ENFORCED 3-PART FLOW** (META-PROMPT, template, Agent 05) — the section is now ~50 lines instead of ~10, with explicit Response 1 / Response 2 / Response 3+ sequencing.
+- **PART 1 / PART 2 / PART 3 labels** in OUTPUT CONTROL — every deliverable explicitly tagged so the model cannot confuse them.
+- **Single-line tool-ready format** in MASTER IMAGE TEMPLATE — every image prompt now ends with a paste-into-Midjourney string (e.g., `<full prompt> --ar 16:9 --v 7 --cref <URL> --cw 100`) in addition to the structured block.
+- **Response-by-response sequencing rules**:
+  - INCLUDE_SCRIPT=yes Response 1: script ALONE + ask VO length + STOP
+  - INCLUDE_SCRIPT=yes Response 2: confirm computed counts + STOP for "continue"
+  - INCLUDE_SCRIPT=yes Response 3+: image prompts FIRST, scene JSON SECOND, both for the same 2 sections
+  - INCLUDE_SCRIPT=no Response 1: confirm scene/image counts + STOP for "continue"
+  - INCLUDE_SCRIPT=no Response 2+: image prompts FIRST, scene JSON SECOND, for 2 stages
+- **Flow anti-fails in FAILSAFE**: emit-JSON-without-images, skip-script-when-yes, emit-all-at-once, image-prompts-as-bare-titles.
+- **6 new quality gates** in Agent 05 specifically targeting the 3-part flow correctness.
+
+### Changed
+- Master prompts can no longer emit scene JSON without the corresponding image prompts in the same response — this is now an absolute rule with FAILSAFE trigger.
+- Master prompts can no longer treat script as optional when INCLUDE_SCRIPT=yes — Response 1 must be the script.
+- The SCRIPT-TO-SCENES PIPELINE 7 steps now explicitly assign each step to a Response number (Response 1: steps 1–2; Response 2: steps 3–6; Response 3+: step 7 batches).
+
+### Fixed
+- **Mansion master prompt bug** — JSON-only output, no image prompts. Now: every response with JSON also has the matching image prompts.
+- **History master prompt bug** — script never emitted. Now: Response 1 is script-only, JSON cannot start until user confirms VO length.
+- **OUTPUT CONTROL ambiguity** — "emit image prompts and scene JSON" was a list interpretable as either (model picked JSON only). Now: explicit "FIRST image prompts, SECOND scene JSON, both required, same response."
+
+### Backward compatibility
+v2.3.0 master prompts continue to function but exhibit the bug. Re-generating from v2.4.0 META-PROMPT produces correctly-flowing master prompts. No data loss; no input format change.
+
+---
+
 ## [2.3.0] — 2026-04-25
 
 Two-mode release. Master prompts now branch on whether the niche needs a written script (history, lore, mystery) or is purely visual (restoration, craft, ASMR). When a script is needed, an automatic math pipeline computes scene and image counts from voiceover length.

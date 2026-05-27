@@ -66,9 +66,16 @@ Render the architecture into the canonical structure defined in `templates/MASTE
 
 ## QUALITY GATES — apply before emitting
 
-- [ ] All sections present, in order (35 if INCLUDE_SCRIPT=no, 36 if INCLUDE_SCRIPT=yes)
+- [ ] All sections present, in order (35 if INCLUDE_SCRIPT=no, 36 if yes)
 - [ ] No `{placeholders}` remaining (every brace filled)
 - [ ] **INCLUDE_SCRIPT was confirmed by the user** (not silently defaulted)
+- [ ] **OUTPUT CONTROL section emits ENFORCED 3-PART FLOW (Script → Images → JSON), not a loose list**
+- [ ] **OUTPUT CONTROL explicitly states: "never emit scene JSON without image prompts in the same response"**
+- [ ] **OUTPUT CONTROL explicitly states: "image prompts must be FULL MASTER IMAGE TEMPLATE blocks + Midjourney-ready single-line strings"**
+- [ ] **OUTPUT CONTROL distinguishes Response 1 (script + ask), Response 2 (confirm counts + STOP), Response 3+ (image prompts + JSON in same response)**
+- [ ] **If INCLUDE_SCRIPT=yes: Response 1 emits full script ALONE (no images, no JSON yet)**
+- [ ] **If INCLUDE_SCRIPT=no: Response 1 emits scene/image count confirmation ALONE before any prompts**
+- [ ] **MASTER IMAGE TEMPLATE includes a single-line tool-ready format example (e.g., a Midjourney string with --cref --ar --v)** so the downstream model knows the exact paste-into-MJ shape
 - [ ] **Numbering scheme consistent across HIGH RETENTION SYSTEM, STAGES, PACING, AUDIO, LIGHTING, SCRIPT, PIPELINE — no mixed Section/Stage indexing**
 - [ ] Variation engine: 4+ axes × 5+ variants
 - [ ] Stage progression: 6+ stages, each visually distinct
@@ -83,16 +90,15 @@ Render the architecture into the canonical structure defined in `templates/MASTE
 - [ ] **Script anti-fail list has 6+ niche-specific failures**
 - [ ] **Script output format example given** (2-section worked example)
 - [ ] **SCRIPT-TO-SCENES PIPELINE emitted IFF INCLUDE_SCRIPT = yes** (not present otherwise — no stub)
-- [ ] **If pipeline emitted:** all 7 steps present + worked example + SCENE_DURATION override note + Sora override note + 5+ pipeline anti-fails
-- [ ] **OUTPUT CONTROL reflects the chosen mode:** script-first if yes, direct-emission if no
+- [ ] **If pipeline emitted:** all 7 steps present + worked example + SCENE_DURATION override note + Sora override note + 5+ pipeline anti-fails + the steps explicitly assign each step to a Response number
 - [ ] Lighting system progresses (not static)
-- [ ] FAILSAFE: 8+ niche-specific rules + character lock failures (if applicable) + pipeline anti-fails (if INCLUDE_SCRIPT=yes)
+- [ ] FAILSAFE: 8+ niche-specific rules + character lock failures (if applicable) + pipeline anti-fails (if INCLUDE_SCRIPT=yes) + **flow anti-fails (emit-JSON-without-images, skip-script-when-yes, emit-all-at-once)**
 - [ ] STYLE LOCK: focal length + grade + tones specified
-- [ ] Master image template: zero placeholders, **includes `Character Lock:` field**
+- [ ] Master image template: zero placeholders, **includes `Character Lock:` field AND a single-line tool-ready example string**
 - [ ] **CHARACTER / SUBJECT CONTINUITY section present with explicit method** (or `none` declared)
 - [ ] **SCENE JSON schema parses as valid JSON** when placeholders are replaced — no empty fields, no trailing commas, no comments
 - [ ] **SCENE JSON schema includes a fully-emitted example** (real values, not placeholders) so downstream model knows what to produce
-- [ ] Length ≥ 1,800 words (script + character + JSON sections add ~400 words to baseline; pipeline adds ~300 more if INCLUDE_SCRIPT=yes)
+- [ ] Length ≥ 1,800 words (script + character + JSON + flow sections add ~500 words to baseline; pipeline adds ~300 more if INCLUDE_SCRIPT=yes)
 - [ ] Reads as a self-contained artifact (no "see Agent 04", no internal references)
 - [ ] Niche identity locked tightly enough that two users producing videos for the same topic would converge visually AND in script register
 - [ ] Topic-agnostic within niche (works for any topic in the niche, not baked to one example)

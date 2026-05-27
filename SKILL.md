@@ -2,7 +2,7 @@
 
 ```yaml
 name: reborn-master-prompt-generator
-version: 2.3.0
+version: 2.4.0
 description: |
   Meta-skill that generates a niche-locked master prompt for AI video creation
   given a NICHE, YOUTUBE_URL, and INCLUDE_SCRIPT toggle (yes/no). Runs a 5-agent

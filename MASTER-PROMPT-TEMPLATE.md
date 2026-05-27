@@ -571,17 +571,53 @@ SCHEMA:
 }
 
 --------------------------------------------------
-OUTPUT CONTROL
+SCRIPT-TO-SCENES PIPELINE (only emitted if INCLUDE_SCRIPT = yes)
 --------------------------------------------------
 
-Generate ONLY {N} sections per response.
+ORDER:
+1. Write the full script in text (per SCRIPT WRITING SYSTEM) — Response 1
+2. Ask user: "What is your target voiceover length in MINUTES?" — Response 1
+3. Compute: TOTAL_SECONDS = VO_MINUTES × 60 — Response 2
+4. Compute: SCENE_COUNT = floor(TOTAL_SECONDS / 8) — Response 2
+5. Compute: IMAGE_COUNT = SCENE_COUNT + 1 — Response 2
+6. Confirm scene/image counts and per-section allocation to user — Response 2 STOP
+7. Emit IMAGE PROMPTS first, then SCENE JSON — Response 3 onward, 2-section batches
 
-Each section:
-1. Transition
-2. Image Prompts
-3. Scene JSON
+ANTI-FAIL:
+- emitting prompts before VO length is asked
+- emitting JSON without image prompts in the same response
+- forgetting +1 for image count
+- breaking the chain (image N must be both end-of-scene-N-1 and start-of-scene-N)
+- non-integer scene counts (always floor)
+- total scenes ≠ SCENE_COUNT after distribution
 
-Then STOP.
+--------------------------------------------------
+OUTPUT CONTROL (CRITICAL — ENFORCED 3-PART FLOW)
+--------------------------------------------------
+
+EVERY response from the master prompt produces ALL THREE parts in order. Skipping any part breaks the production pipeline.
+
+PART 1 — SCRIPT (text, only if INCLUDE_SCRIPT = yes)
+PART 2 — IMAGE PROMPTS (always — N+1 prompts for chained-frame; N for Sora)
+PART 3 — SCENE JSON (always — N motion-clip JSON blocks)
+
+ENFORCED ORDER:
+
+IF INCLUDE_SCRIPT = yes:
+  Response 1: emit FULL script (all sections) + ask "VO length in minutes?" + STOP
+  Response 2: confirm computed scene/image counts + STOP, wait for "continue"
+  Response 3+: per pair of 2 sections — emit IMAGE PROMPTS first (full MASTER IMAGE TEMPLATE blocks + single-line MJ-ready strings), then SCENE JSON, then STOP
+
+IF INCLUDE_SCRIPT = no:
+  Response 1: confirm scene/image counts from PACING + STOP, wait for "continue"
+  Response 2+: per pair of 2 stages — emit Transition prompt+JSON, then IMAGE PROMPTS for every scene, then SCENE JSON for every scene, then STOP
+
+ABSOLUTE RULES:
+- never emit scene JSON without the corresponding image prompts in the same response
+- never emit image prompts as bare titles or numbers — every image prompt is a full MASTER IMAGE TEMPLATE block PLUS a single-line MJ-ready string with --cref / --ar / --v
+- never skip Part 2 (image prompts) and jump to Part 3 (JSON)
+- 2-sections-per-response cadence is mandatory
+- script and JSON never in the same response
 
 --------------------------------------------------
 FAILSAFE
